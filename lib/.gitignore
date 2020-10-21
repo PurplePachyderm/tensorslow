@@ -1,0 +1,3 @@
+# Used to build lib files (.o and .so)
+*
+!.gitignore
