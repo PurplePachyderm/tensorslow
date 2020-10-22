@@ -29,3 +29,8 @@ Command | Effect | Target folder
 `make clean_test` | Clean tests in `bin` | `bin`
 `make clean_perf` | Clean benchmarks in `bin` | `bin`
 `make clean_examples` | Clean examples in `bin` | `bin`
+
+
+## Requirements
+
+- [googletest](https://github.com/google/googletest) is required to build the tests.
