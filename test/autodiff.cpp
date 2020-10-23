@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <iomanip>
 #include <math.h>
 
 #include "../include/tensorslow.h"
@@ -84,16 +85,8 @@ TEST(AutodiffTest, SimpleDiv) {
 
 	ts::Gradient grad = res.grad();
 
-	float gradA = grad.getValue(a);
-	float gradB = grad.getValue(b);
-
-	float valA = a.getValue();
-	float valB = b.getValue();
-
-	// Using ASSERT_NEAR because ASSERT_EQ returns false
-	// (most definitely because of floating point errors)
-	ASSERT_NEAR(gradA, 1.0 / valB, 0.0000001);
-	ASSERT_NEAR(gradB, -valA / (valB * valB), 0.0000001);
+	ASSERT_EQ(grad.getValue(a), 1.0f / b.getValue());
+	ASSERT_EQ(grad.getValue(b), - a.getValue() / (b.getValue() * b.getValue()));
 	ASSERT_EQ(wList.size(), 3);
 }
 
@@ -102,27 +95,23 @@ TEST(AutodiffTest, SimpleDiv) {
 TEST(AutodiffTest, Polynomial) {
 	// Slightly more complex example with a polynomial of degree 2
 
+	std::cout << std::setprecision(17);
+
 	ts::WengertList wList;
 
-	ts::Var x = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	ts::Var x = ts::Var((float)rand()/(float)(RAND_MAX/100.0f), &wList);
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/10.0), &wList);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/10.0), &wList);
-	ts::Var c = ts::Var((float)rand()/(float)(RAND_MAX/10.0), &wList);
+	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/10.0f), &wList);
+	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/10.0f), &wList);
+	ts::Var c = ts::Var((float)rand()/(float)(RAND_MAX/10.0f), &wList);
 
 	ts::Var y = a * x * x + b * x - c;
 
-	float valX = x.getValue();
-	float valY = y.getValue();
 	ts::Gradient grad = y.grad();
-	float gradX = grad.getValue(x);
 
-	// Using ASSERT_NEAR again
-	// NOTE Rounding errors seem to get more important after every operation.
-	// This could be a problem in the future, while evaluating complex
-	// expressions. Test doesn't pass for now.
-	ASSERT_NEAR(valY, a.getValue() * valX * valX + b.getValue() * valX - c.getValue(), 0.0000001);
-	ASSERT_NEAR(gradX, 2.0 * a.getValue() * valX + b.getValue(), 0.0000001);
+
+	ASSERT_EQ(y.getValue(), a.getValue() * x.getValue() * x.getValue() + b.getValue() * x.getValue() - c.getValue());
+	ASSERT_EQ(grad.getValue(x), 2.0f * a.getValue() * x.getValue() + b.getValue());
 	ASSERT_EQ(wList.size(), 9);
 }
 
