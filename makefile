@@ -34,7 +34,7 @@ lib: $(SO_PATH)
 $(SO_PATH): $(OBJ_FILES)
 	$(CC) $^ $(CPPFLAGS) $(OPT_FLAGS) -shared -o $@
 $(OBJ_FILES): $(LIB)/%.o : $(SRC)/%.cpp
-	$(CC) $(CPPFLAGS) $(OPT_FLAGS) $< -c -o $@
+	$(CC) $(CPPFLAGS) $(OPT_FLAGS) $< -fPIC -c -o $@
 
 
 test: $(SO_PATH) $(TEST_FILES)
