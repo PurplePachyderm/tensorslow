@@ -15,9 +15,18 @@ Command | Effect | Output folder
 `make perf` | Build benchmarks | `bin`
 `make examples` | Build examples | `bin`
 
-The library's `.o` and `.so` files are built in the `lib` directory. Other executables are built in the `bin` directory with an adequate suffix.
+The library's `.o` and `.so` files are built in the `lib` directory.
+Other executables are built in the `bin` directory with an adequate suffix.
+
+**Note** : Executables in the bin directory must be run from the root of the
+project to be able to find `libtensorslow.so`, so you have to use the
+following command :
+
+`./bin/example_test`
+
 
 In order to clean the build directories, you can use the following phonies :
+
 
 Command | Effect | Target folder
 --- | --- | ---

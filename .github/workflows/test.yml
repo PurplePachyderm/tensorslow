@@ -24,5 +24,4 @@ jobs:
     - name: Build
       run: make test
     - name: Run
-      working-directory: ./bin
-      run: for i in *_test; do ./$i; done
+      run: for i in bin/*_test; do $i; done
