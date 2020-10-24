@@ -1,0 +1,22 @@
+name: Run all tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install gtest
+      run: sudo apt install libgtest-dev
+    - name: Build
+      run: make test
+    - name: Run
+      working-directory: ./bin
+      run: for i in *_test; do ./$i; done
