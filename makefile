@@ -3,8 +3,8 @@
 CC=g++
 
 CPPFLAGS=-Wall
-OPT_FLAGS=-Ofast
-TEST_FLAGS=-g -lgtest
+OPT_FLAGS=-O3
+TEST_FLAGS=-g -lgtest -lpthread
 
 SRC=src
 BIN=bin
