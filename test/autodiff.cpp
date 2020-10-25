@@ -13,17 +13,18 @@
 
 TEST(AutodiffTest, SimpleSum) {
 	// Simple test of + operator
-	ts::WengertList wList;
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	ts::WengertList<float> wList;
 
-	ts::Var res = a + b;
+	auto a = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	auto b = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
 
-	ts::Gradient grad = res.grad();
+	auto res = a + b;
 
-	float gradA = grad.getValue(a);
-	float gradB = grad.getValue(b);
+	auto grad = res.grad();
+
+	auto gradA = grad.getValue(a);
+	auto gradB = grad.getValue(b);
 
 	ASSERT_EQ(gradA, 1.0);
 	ASSERT_EQ(gradB, 1.0);
@@ -34,17 +35,18 @@ TEST(AutodiffTest, SimpleSum) {
 
 TEST(AutodiffTest, SimpleDiff) {
 	// Simple test of - operator
-	ts::WengertList wList;
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	ts::WengertList<float> wList;
 
-	ts::Var res = a - b;
+	auto a = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	auto b = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
 
-	ts::Gradient grad = res.grad();
+	auto res = a - b;
 
-	float gradA = grad.getValue(a);
-	float gradB = grad.getValue(b);
+	auto grad = res.grad();
+
+	auto gradA = grad.getValue(a);
+	auto gradB = grad.getValue(b);
 
 	ASSERT_EQ(gradA, 1.0);
 	ASSERT_EQ(gradB, -1.0);
@@ -55,17 +57,18 @@ TEST(AutodiffTest, SimpleDiff) {
 
 TEST(AutodiffTest, SimpleProd) {
 	// Simple test of * operator
-	ts::WengertList wList;
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	ts::WengertList<float> wList;
 
-	ts::Var res = a * b;
+	auto a = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	auto b = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
 
-	ts::Gradient grad = res.grad();
+	auto res = a * b;
 
-	float gradA = grad.getValue(a);
-	float gradB = grad.getValue(b);
+	auto grad = res.grad();
+
+	auto gradA = grad.getValue(a);
+	auto gradB = grad.getValue(b);
 
 	ASSERT_EQ(gradA, b.getValue());
 	ASSERT_EQ(gradB, a.getValue());
@@ -76,14 +79,15 @@ TEST(AutodiffTest, SimpleProd) {
 
 TEST(AutodiffTest, SimpleDiv) {
 	// Simple test of / operator
-	ts::WengertList wList;
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	ts::WengertList<float> wList;
 
-	ts::Var res = a / b;
+	auto a = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
+	auto b = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList);
 
-	ts::Gradient grad = res.grad();
+	auto res = a / b;
+
+	auto grad = res.grad();
 
 	ASSERT_EQ(grad.getValue(a), 1.0f / b.getValue());
 	ASSERT_EQ(grad.getValue(b), - a.getValue() / (b.getValue() * b.getValue()));
@@ -95,19 +99,17 @@ TEST(AutodiffTest, SimpleDiv) {
 TEST(AutodiffTest, Polynomial) {
 	// Slightly more complex example with a polynomial of degree 2
 
-	std::cout << std::setprecision(17);
+	ts::WengertList<float> wList;
 
-	ts::WengertList wList;
+	auto x = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0f), &wList);
 
-	ts::Var x = ts::Var((float)rand()/(float)(RAND_MAX/100.0f), &wList);
+	auto a = ts::NewVar((float)rand()/(float)(RAND_MAX/10.0f), &wList);
+	auto b = ts::NewVar((float)rand()/(float)(RAND_MAX/10.0f), &wList);
+	auto c = ts::NewVar((float)rand()/(float)(RAND_MAX/10.0f), &wList);
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/10.0f), &wList);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/10.0f), &wList);
-	ts::Var c = ts::Var((float)rand()/(float)(RAND_MAX/10.0f), &wList);
+	auto y = a * x * x + b * x - c;
 
-	ts::Var y = a * x * x + b * x - c;
-
-	ts::Gradient grad = y.grad();
+	auto grad = y.grad();
 
 
 	ASSERT_EQ(y.getValue(), a.getValue() * x.getValue() * x.getValue() + b.getValue() * x.getValue() - c.getValue());
@@ -121,13 +123,13 @@ TEST(AutodiffTest, DifferentLists) {
 	// Ensures that using  Vars from different lists works
 	// as expected
 
-	ts::WengertList wList1;
-	ts::WengertList wList2;
+	ts::WengertList<float> wList1;
+	ts::WengertList<float> wList2;
 
-	ts::Var a = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList1);
-	ts::Var b = ts::Var((float)rand()/(float)(RAND_MAX/100.0), &wList2);
+	auto a = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList1);
+	auto b = ts::NewVar((float)rand()/(float)(RAND_MAX/100.0), &wList2);
 
-	ts::Var c = a + b;
+	auto c = a + b;
 
 	ASSERT_EQ(c.getValue(), 0.0);
 	ASSERT_EQ(wList1.size(), 1);

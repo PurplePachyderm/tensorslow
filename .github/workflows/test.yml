@@ -15,8 +15,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install gtest
       run: |
-        sudo apt install libgtest-dev
-        sudo apt-get install cmake
+        sudo apt install libgtest-dev cmake
         cd /usr/src/gtest
         sudo cmake CMakeLists.txt
         sudo make
