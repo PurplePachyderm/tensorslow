@@ -42,4 +42,6 @@ Command | Effect | Target folder
 
 ## Requirements
 
-- [googletest](https://github.com/google/googletest) is required to build the tests.
+- [Eigen](http://eigen.tuxfamily.org) : your compiler should have access
+  to the `Eigen` directory
+- [googletest](https://github.com/google/googletest) : required to build the tests
