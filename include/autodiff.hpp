@@ -11,7 +11,6 @@
 
 
 
-
 namespace ts {
 	template <typename T> class Node;
 	template <typename T> class WengertList;

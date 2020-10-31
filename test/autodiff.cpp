@@ -117,9 +117,6 @@ TEST(AutodiffTest, SimpleDiv) {
 
 TEST(AutodiffTest, Polynomial) {
 	// Slightly more complex example with a polynomial of degree 2 (on scalars)
-
-	std::cout << std::setprecision(17);
-
 	ts::WengertList<float> wList;
 
 	Eigen::ArrayXf x_(1,1);
@@ -178,6 +175,52 @@ TEST(AutodiffTest, DifferentLists) {
 	ASSERT_EQ(c.getValue().cols(), 0.0);
 	ASSERT_EQ(wList1.size(), 1);
 	ASSERT_EQ(wList2.size(), 1);
+}
+
+
+
+TEST(AutodiffTest, ElementWise) {
+	// Test a few element-wise operations on non scalar inputs
+
+	ts::WengertList<float> wList;
+
+
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> a_;
+	a_.setRandom(3, 3);
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> b_;
+	b_.setRandom(3, 3);
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> c_;
+	c_.setRandom(3, 3);
+
+
+	ts::Tensor<float> a = ts::Tensor<float>(a_, &wList);
+	ts::Tensor<float> b = ts::Tensor<float>(b_, &wList);
+	ts::Tensor<float> c = ts::Tensor<float>(c_, &wList);
+
+	ts::Tensor<float> d = a * b + c;
+
+
+	ts::Gradient<float> grad = d.grad();
+
+
+	for(unsigned i=0; i<3; i++) {
+		for(unsigned j=0; j<3; j++) {
+			ASSERT_EQ(
+				d.getValue()(i, j),
+				a.getValue()(i,j) * b.getValue()(i,j) + c.getValue()(i,j)
+			);
+
+			ASSERT_EQ(
+				grad.getValue(a)(i, j),
+				b.getValue()(i,j)
+			);
+
+			ASSERT_EQ(
+				grad.getValue(c)(i, j),
+				1.0f
+			);
+		}
+	}
 }
 
 

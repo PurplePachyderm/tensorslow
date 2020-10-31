@@ -131,12 +131,12 @@ ts::Gradient<T> ts::Tensor<T>::grad() {
 		derivatives[i].setZero(wList->nodes[i].rows, wList->nodes[i].cols);
 	}
 
-	// Gradient of self with respect to itself
+	// Initialize gradient of self with respect to itself
 	derivatives[index].fill(1.0);
 
 
 	// Iterate over the Wengert list backwards
-	for (unsigned i = wList->nodes.size(); i > 0; i--) {
+	for (unsigned i = wList->nodes.size(); i-- > 0; ) {
 		ts::Node<T> * node = &(wList->nodes[i]);
 
 		// Increment parent nodes
