@@ -161,3 +161,46 @@ ts::Tensor<T> ts::matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y) {
 		)
 	);
 }
+
+
+
+template <typename T>
+ts::Tensor<T> ts::sigmoid(const ts::Tensor<T> &x) {
+	// Element-wise sigmoid function
+
+	// a = e^x / (e^x + 1) = 1 / (1 + e^-x)
+	// da / dx = e^x / (e^x + 1)^2
+
+	return ts::Tensor<T>(
+		x.value.exp() / (x.value.exp() + 1),
+		x.wList,
+		ts::Node<T>(
+			{x.value.rows(), x.value.cols()}, ts::ElementWise,
+			x.value.exp() / (x.value.exp() + 1).pow(2), x.index
+		)
+	);
+}
+
+
+
+template <typename T>
+ts::Tensor<T> ts::squaredNorm(const ts::Tensor<T> &x) {
+	// Returns the square of the 2-norm / euclidean norm of a vector
+
+	// The gradient will have to be computed for a scalar
+	x.wList->elementWiseOnly = false;
+
+	// a = norm()
+	// da / dx = 2x
+
+	Eigen::Array<T, 1, 1> res;
+	res << (T) x.value.matrix().squaredNorm();
+	return ts::Tensor<T>(
+		res,
+		x.wList,
+		ts::Node<T>(
+			{1, 1}, ts::Norm,
+			2 * x.value.matrix(), x.index
+		)
+	);
+}

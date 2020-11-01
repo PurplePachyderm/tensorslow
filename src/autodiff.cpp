@@ -122,6 +122,54 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Tensor<T>::getValue() {
 
 
 template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Tensor<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> * childDerivative,
+		ts::Node<T> * node, unsigned j
+) {
+
+	// Used in the ts::grad() method. Computes the increment of a derivative
+	// depending on its operation type.
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
+
+	switch(node->operationType) {
+
+		case ts::ElementWise: {
+			increment = node->values[j] * *childDerivative;
+			break;
+		}
+
+		case ts::MatrixProduct: {
+			// Make sure operands are at the correct position
+			if(node->values[j].cols() == childDerivative->rows()) {
+				increment =
+				(node->values[j].matrix() * childDerivative->matrix()).array();
+			}
+			else if(node->values[j].rows() == childDerivative->cols()) {
+				increment =
+				(childDerivative->matrix() * node->values[j].matrix() ).array();
+			}
+			break;
+		}
+
+		case ts::Norm: {
+			increment =
+			node->values[j] * (*childDerivative)(0, 0);
+			break;
+		}
+
+		default: {
+			// ts::None or unhandled value : do nothing
+			// (this shouldn't happen)
+		}
+	}
+
+	return increment;
+}
+
+
+
+template <typename T>
 ts::Gradient<T> ts::Tensor<T>::grad() {
 	// Computes the gradient of this variable with respect to all the Wengert
 	// list's nodes. Derivatives are stored in a vector wich size equals the
@@ -131,7 +179,7 @@ ts::Gradient<T> ts::Tensor<T>::grad() {
 	// - All operations are element wise, so we allow this tensor not to be a scalar
 	// - Some operations change shapes of tensors, we only allow this tensor to be scalar
 
-	// Making sure that we're not in case 2
+	// Making sure that we're not in case 2 with a non-scalar tensor
 	if(!wList->elementWiseOnly && value.rows() != 1 && value.cols() != 1) {
 		return ts::Gradient<T>({});
 	}
@@ -157,25 +205,9 @@ ts::Gradient<T> ts::Tensor<T>::grad() {
 
 		// Increment parent nodes
 		for(unsigned j = 0; j < node->dependencies.size(); j++) {
-
-			// (depends on the operation type)
-			switch(node->operationType) {
-				case ts::ElementWise: {
-					derivatives[node->dependencies[j]] += node->values[j] * derivatives[i];
-					break;
-				}
-
-				case ts::MatrixProduct: {
-					derivatives[node->dependencies[j]] +=
-					(node->values[j].matrix() * derivatives[i].matrix()).array();
-					break;
-				}
-
-				default: {
-					// ts::None or unhandled value : do nothing
-					// (this shouldnt't happen)
-				}
-			}
+			derivatives[node->dependencies[j]] += incrementGradient(
+				&(derivatives[i]), node, j
+			);
 		}
 	}
 

@@ -32,7 +32,8 @@ namespace ts {
 	enum OperationType {
 		None,
 		ElementWise,
-		MatrixProduct
+		MatrixProduct,
+		Norm
 	};
 
 
@@ -47,6 +48,10 @@ namespace ts {
 
 	template <typename T>
 	ts::Tensor<T> matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+	template <typename T>
+	ts::Tensor<T> sigmoid(const ts::Tensor<T> &x);
+	template <typename T>
+	ts::Tensor<T> squaredNorm(const ts::Tensor<T> &x);
 }
 
 
@@ -87,6 +92,8 @@ public:
 	friend ts::Tensor<T> operator/<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 };
 
 
@@ -102,8 +109,10 @@ public:
 
 	friend class ts::Tensor<T>;
 
-	// Other non-element wise operations
+	// Other non-element wise operations (to change elementWiseOnly)
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 };
 
 
@@ -123,6 +132,11 @@ private:
 		ts::WengertList<T> * newWList, ts::Node<T> node
 	);
 
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> * childDerivative,
+			ts::Node<T> * node, unsigned j
+	);
+
 public:
 	Tensor(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
@@ -140,6 +154,8 @@ public:
 	friend ts::Tensor<T> operator/<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 };
 
 template <typename T>
