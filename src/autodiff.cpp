@@ -131,7 +131,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Tensor<T>::incrementGradient
 	// depending on its operation type.
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
-
 	switch(node->operationType) {
 
 		case ts::ElementWise: {
@@ -239,3 +238,33 @@ bool ts::Gradient<T>::isEmpty() {
 	// Used to look for errors after computing a gradient
 	return derivatives.size() == 0 ? true : false;
 }
+
+
+
+// Add data types support manually (the compiler would need an implementation
+// directly in the header file otherwise).
+// This method has the advantage of forbidding non-numeric data types like
+// strings, etc... as well as keeping the source code in this .cpp file.
+// More data types may be added in the future.
+
+	// float
+template class ts::Node<float>;
+template class ts::WengertList<float>;
+template class ts::Var<float>;
+template class ts::Gradient<float>;
+template ts::Var<float> ts::NewVar(float newValue, ts::WengertList<float> * newWList);
+template ts::Var<float> ts::operator+(const ts::Var<float> &x, const ts::Var<float> &y);
+template ts::Var<float> ts::operator-(const ts::Var<float> &x, const ts::Var<float> &y);
+template ts::Var<float> ts::operator*(const ts::Var<float> &x, const ts::Var<float> &y);
+template ts::Var<float> ts::operator/(const ts::Var<float> &x, const ts::Var<float> &y);
+
+	// double
+template class ts::Node<double>;
+template class ts::WengertList<double>;
+template class ts::Var<double>;
+template class ts::Gradient<double>;
+template ts::Var<double> ts::NewVar(double newValue, ts::WengertList<double> * newWList);
+template ts::Var<double> ts::operator+(const ts::Var<double> &x, const ts::Var<double> &y);
+template ts::Var<double> ts::operator-(const ts::Var<double> &x, const ts::Var<double> &y);
+template ts::Var<double> ts::operator*(const ts::Var<double> &x, const ts::Var<double> &y);
+template ts::Var<double> ts::operator/(const ts::Var<double> &x, const ts::Var<double> &y);
