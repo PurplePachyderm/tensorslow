@@ -180,7 +180,7 @@ TEST(AutodiffTest, DifferentLists) {
 
 
 TEST(AutodiffTest, ElementWise) {
-	// Test a few element-wise operations on non scalar inputs
+	// Tests a few element-wise operations on non scalar inputs
 
 	ts::WengertList<float> wList;
 
@@ -219,6 +219,40 @@ TEST(AutodiffTest, ElementWise) {
 				grad.getValue(c)(i, j),
 				1.0f
 			);
+		}
+	}
+}
+
+
+
+TEST(AutodiffTest, MatProd) {
+	// Tests a matrix-matrix product, as well as the gradient protection
+	// mechanism (when computing grad of a non scalar tensor)
+
+	ts::WengertList<float> wList;
+
+
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> a_;
+	a_.setRandom(3, 3);
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> b_;
+	b_.setRandom(3, 3);
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> c_;
+	c_ = a_.matrix() * b_.matrix();
+
+
+	ts::Tensor<float> a = ts::Tensor<float>(a_, &wList);
+	ts::Tensor<float> b = ts::Tensor<float>(b_, &wList);
+
+	ts::Tensor<float> c = ts::matProd(a, b);
+
+
+	ts::Gradient<float> grad = c.grad();
+
+
+	for(unsigned i=0; i<3; i++) {
+		for(unsigned j=0; j<3; j++) {
+			ASSERT_EQ(c_(i, j), c.getValue()(i,j));
+			ASSERT_EQ(grad.isEmpty(), true);
 		}
 	}
 }

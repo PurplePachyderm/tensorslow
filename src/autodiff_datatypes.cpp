@@ -8,6 +8,7 @@
 
 #include "../include/autodiff.hpp"
 #include "./autodiff.cpp"
+#include "./autodiff_operations.cpp"
 
 
 	// float
@@ -27,6 +28,8 @@ template ts::Tensor<float> ts::operator-(const ts::Tensor<float> &x, const ts::T
 template ts::Tensor<float> ts::operator*(const ts::Tensor<float> &x, const ts::Tensor<float> &y);
 template ts::Tensor<float> ts::operator/(const ts::Tensor<float> &x, const ts::Tensor<float> &y);
 
+template ts::Tensor<float> ts::matProd(const ts::Tensor<float> &x, const ts::Tensor<float> &y);
+
 
 
 	// double
@@ -45,3 +48,5 @@ template ts::Tensor<double> ts::operator+(const ts::Tensor<double> &x, const ts:
 template ts::Tensor<double> ts::operator-(const ts::Tensor<double> &x, const ts::Tensor<double> &y);
 template ts::Tensor<double> ts::operator*(const ts::Tensor<double> &x, const ts::Tensor<double> &y);
 template ts::Tensor<double> ts::operator/(const ts::Tensor<double> &x, const ts::Tensor<double> &y);
+
+template ts::Tensor<double> ts::matProd(const ts::Tensor<double> &x, const ts::Tensor<double> &y);

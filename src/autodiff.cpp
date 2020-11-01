@@ -12,17 +12,21 @@ template <typename T>
 ts::Node<T>::Node(std::vector<long> shape) {
 	rows = shape[0];
 	cols = shape[1];
+
+	// No operation for this node (input var)
 };
 
 
 
 template <typename T>
 ts::Node<T>::Node(
-	std::vector<long> shape,
+	std::vector<long> shape, ts::OperationType newOperationType,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep
 ) {
 	rows = shape[0];
 	cols = shape[1];
+
+	operationType = newOperationType;
 
 	values =  {xVal};	// [da/dx]
 	dependencies =  {xDep};
@@ -32,12 +36,14 @@ ts::Node<T>::Node(
 
 template <typename T>
 ts::Node<T>::Node(
-	std::vector<long> shape,
+	std::vector<long> shape, ts::OperationType newOperationType,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> yVal, int yDep
 ) {
 	rows = shape[0];
 	cols = shape[1];
+
+	operationType = newOperationType;
 
 	values =  {xVal, yVal};	// [da/dx, da/dy]
 	dependencies =  {xDep, yDep};
@@ -117,9 +123,19 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Tensor<T>::getValue() {
 
 template <typename T>
 ts::Gradient<T> ts::Tensor<T>::grad() {
-	// Computes the gradient of all Wengert list's nodes with respect to this
-	// variable. Derivatives are stored in a vector wich size equals the
+	// Computes the gradient of this variable with respect to all the Wengert
+	// list's nodes. Derivatives are stored in a vector wich size equals the
 	// Wengert list's.
+
+	// 2 possibilities :
+	// - All operations are element wise, so we allow this tensor not to be a scalar
+	// - Some operations change shapes of tensors, we only allow this tensor to be scalar
+
+	// Making sure that we're not in case 2
+	if(!wList->elementWiseOnly && value.rows() != 1 && value.cols() != 1) {
+		return ts::Gradient<T>({});
+	}
+
 
 	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > derivatives(
 		wList->nodes.size(),
@@ -140,10 +156,26 @@ ts::Gradient<T> ts::Tensor<T>::grad() {
 		ts::Node<T> * node = &(wList->nodes[i]);
 
 		// Increment parent nodes
-		// WARNING Only works on element-wise operations
-		// (derivatives[i] might not have the same shape otherwise)
 		for(unsigned j = 0; j < node->dependencies.size(); j++) {
-			derivatives[node->dependencies[j]] += node->values[j] * derivatives[i];
+
+			// (depends on the operation type)
+			switch(node->operationType) {
+				case ts::ElementWise: {
+					derivatives[node->dependencies[j]] += node->values[j] * derivatives[i];
+					break;
+				}
+
+				case ts::MatrixProduct: {
+					derivatives[node->dependencies[j]] +=
+					(node->values[j].matrix() * derivatives[i].matrix()).array();
+					break;
+				}
+
+				default: {
+					// ts::None or unhandled value : do nothing
+					// (this shouldnt't happen)
+				}
+			}
 		}
 	}
 
@@ -170,128 +202,8 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Gradient<T>::getValue(ts::Te
 
 
 
-	// Overloaded arithmetic operators
-
 template <typename T>
-ts::Tensor<T> ts::operator+(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
-	// Element-wise sum operation
-
-	if(
-		x.wList != y.wList ||
-		x.value.rows() != y.value.rows() ||
-		x.value.cols() != y.value.cols()
-	) {
-		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
-	}
-
-
-	// a = x + y
-	// da / dx = 1
-	// a / dy = 1
-
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> grad;
-	grad.setOnes(x.value.rows(), x.value.cols());
-
-	return ts::Tensor<T>(
-		x.value + y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()},
-			grad, x.index,
-			grad, y.index
-		)
-	);
-}
-
-
-
-template <typename T>
-ts::Tensor<T> ts::operator-(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
-	// Element-wise difference operation
-
-	if(
-		x.wList != y.wList ||
-		x.value.rows() != y.value.rows() ||
-		x.value.cols() != y.value.cols()
-	) {
-		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
-	}
-
-
-	// a = x - y
-	// da / dx = 1
-	// a / dy = -1
-
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> grad;
-	grad.setOnes(x.value.rows(), x.value.cols());
-
-	return ts::Tensor<T>(
-		x.value - y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()},
-			grad, x.index,
-			-1 * grad, y.index
-		)
-	);
-}
-
-
-
-template <typename T>
-ts::Tensor<T> ts::operator*(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
-	// Element-wise (Hadamard) product operation
-
-	if(
-		x.wList != y.wList ||
-		x.value.rows() != y.value.rows() ||
-		x.value.cols() != y.value.cols()
-	) {
-		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
-	}
-
-
-	// a = x * y
-	// da / dx = y
-	// a / dy = x
-
-	return ts::Tensor<T>(
-		x.value * y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()},
-			y.value, x.index,
-			x.value, y.index
-		)
-	);
-}
-
-
-
-template <typename T>
-ts::Tensor<T> ts::operator/(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
-	// Element-wise quotient operation
-
-	if(
-		x.wList != y.wList ||
-		x.value.rows() != y.value.rows() ||
-		x.value.cols() != y.value.cols()
-	) {
-		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
-	}
-
-
-	// a = x / y
-	// da / dx = 1 / y
-	// a / dy = -x / y^2
-
-	return ts::Tensor<T>(
-		x.value + y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()},
-			1.0 / y.value, x.index,
-			-x.value / (y.value * y.value), y.index
-		)
-	);
+bool ts::Gradient<T>::isEmpty() {
+	// Used to look for errors after computing a gradient
+	return derivatives.size() == 0 ? true : false;
 }

@@ -29,6 +29,13 @@ namespace ts {
 	);
 
 
+	enum OperationType {
+		None,
+		ElementWise,
+		MatrixProduct
+	};
+
+
 	template <typename T>
 	ts::Tensor<T> operator+(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	template <typename T>
@@ -37,6 +44,9 @@ namespace ts {
 	ts::Tensor<T> operator*(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	template <typename T>
 	ts::Tensor<T> operator/(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+
+	template <typename T>
+	ts::Tensor<T> matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 }
 
 
@@ -48,13 +58,13 @@ private:
 	Node(std::vector<long> shape);
 
 	// Represents a unary operator
-	Node(std::vector<long> shape,
+	Node(std::vector<long> shape, ts::OperationType newOperationType,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep
 	);
 
 	// Represents a binary operator
 	Node(
-		std::vector<long> shape,
+		std::vector<long> shape, ts::OperationType newOperationType,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> yVal, int yDep
 	);
@@ -65,6 +75,7 @@ private:
 
 	// Shape of the corresponding tensor
 	unsigned rows, cols;
+	ts::OperationType operationType = ts::None;
 
 public:
 
@@ -74,6 +85,8 @@ public:
 	friend ts::Tensor<T> operator-<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator*<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator/<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+
+	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 };
 
 
@@ -82,11 +95,15 @@ template <typename T>
 class ts::WengertList {
 private:
 	std::vector<ts::Node<T>> nodes{};
+	bool elementWiseOnly = true;
 
 public:
 	int size();
 
 	friend class ts::Tensor<T>;
+
+	// Other non-element wise operations
+	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 };
 
 
@@ -121,6 +138,8 @@ public:
 	friend ts::Tensor<T> operator-<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator*<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator/<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
+
+	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 };
 
 template <typename T>
@@ -144,6 +163,7 @@ private:
 
 public:
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> getValue(ts::Tensor<T> a);
+	bool isEmpty();
 
 	friend class ts::Tensor<T>;
 };
