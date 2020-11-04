@@ -12,21 +12,17 @@ template <typename T>
 ts::Node<T>::Node(std::vector<long> shape) {
 	rows = shape[0];
 	cols = shape[1];
-
-	// No operation for this node (input var)
 };
 
 
 
 template <typename T>
 ts::Node<T>::Node(
-	std::vector<long> shape, ts::OperationType newOperationType,
+	std::vector<long> shape,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep
 ) {
 	rows = shape[0];
 	cols = shape[1];
-
-	operationType = newOperationType;
 
 	values =  {xVal};	// [da/dx]
 	dependencies =  {xDep};
@@ -36,17 +32,88 @@ ts::Node<T>::Node(
 
 template <typename T>
 ts::Node<T>::Node(
-	std::vector<long> shape, ts::OperationType newOperationType,
+	std::vector<long> shape,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> yVal, int yDep
 ) {
 	rows = shape[0];
 	cols = shape[1];
 
-	operationType = newOperationType;
-
 	values =  {xVal, yVal};	// [da/dx, da/dy]
 	dependencies =  {xDep, yDep};
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::InputNode<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+		unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. For an input node, this
+	// function should never be called
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
+	return increment;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::ElementWiseNode<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+		unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
+	// for an element-wise operation
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
+	increment = this->values[j] * childDerivative;
+
+	return increment;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::MatProdNode<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+		unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
+	// for a matrix-matrix product.
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
+
+	// Make sure operands are at the correct position
+	if(this->values[j].cols() == childDerivative.rows()) {
+		increment = (this->values[j].matrix() * childDerivative.matrix()).array();
+	}
+	else if(this->values[j].rows() == childDerivative.cols()) {
+		increment = (childDerivative.matrix() * this->values[j].matrix() ).array();
+	}
+
+	return increment;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::ScalarNode<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+		unsigned &j
+) {
+
+	// Used in the ts::Tensor::grad() method. Computes the increment of a derivative
+	// for a tensor to scalar operation.
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
+	increment = this->values[j] * childDerivative(0, 0);
+
+	return increment;
 }
 
 
@@ -74,8 +141,13 @@ ts::Tensor<T>::Tensor(
 	if(wList != NULL) {
 		// Add new Tensor to the Wengert list
 		index = wList->nodes.size();
+
 		// Node without dependencies (input var)
-		wList->nodes.push_back(ts::Node<T>({newValue.rows(), newValue.cols()}));
+		std::shared_ptr<ts::Node<T>> nodePtr (
+			new ts::ElementWiseNode<T>({newValue.rows(), newValue.cols()})
+		);
+
+		wList->nodes.push_back(nodePtr);
 	} else {
 		index = -1;
 	}
@@ -86,7 +158,7 @@ ts::Tensor<T>::Tensor(
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
-	ts::WengertList<T> * newWList, ts::Node<T> node
+	ts::WengertList<T> * newWList, std::shared_ptr<ts::Node<T>> node
 ) {
 	value = newValue;
 
@@ -122,54 +194,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Tensor<T>::getValue() {
 
 
 template <typename T>
-Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Tensor<T>::incrementGradient(
-		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> * childDerivative,
-		ts::Node<T> * node, unsigned j
-) {
-
-	// Used in the ts::grad() method. Computes the increment of a derivative
-	// depending on its operation type.
-
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
-
-	switch(node->operationType) {
-
-		case ts::ElementWise: {
-			increment = node->values[j] * *childDerivative;
-			break;
-		}
-
-		case ts::MatrixProduct: {
-			// Make sure operands are at the correct position
-			if(node->values[j].cols() == childDerivative->rows()) {
-				increment =
-				(node->values[j].matrix() * childDerivative->matrix()).array();
-			}
-			else if(node->values[j].rows() == childDerivative->cols()) {
-				increment =
-				(childDerivative->matrix() * node->values[j].matrix() ).array();
-			}
-			break;
-		}
-
-		case ts::Norm: {
-			increment =
-			node->values[j] * (*childDerivative)(0, 0);
-			break;
-		}
-
-		default: {
-			// ts::None or unhandled value : do nothing
-			// (this shouldn't happen)
-		}
-	}
-
-	return increment;
-}
-
-
-
-template <typename T>
 ts::Gradient<T> ts::Tensor<T>::grad() {
 	// Computes the gradient of this variable with respect to all the Wengert
 	// list's nodes. Derivatives are stored in a vector wich size equals the
@@ -192,7 +216,7 @@ ts::Gradient<T> ts::Tensor<T>::grad() {
 
 	// Initialize all gradients with correct size zero-filled arrays
 	for(unsigned i = 0; i < derivatives.size(); i++) {
-		derivatives[i].setZero(wList->nodes[i].rows, wList->nodes[i].cols);
+		derivatives[i].setZero(wList->nodes[i]->rows, wList->nodes[i]->cols);
 	}
 
 	// Initialize gradient of self with respect to itself
@@ -201,12 +225,13 @@ ts::Gradient<T> ts::Tensor<T>::grad() {
 
 	// Iterate over the Wengert list backwards
 	for (unsigned i = wList->nodes.size(); i-- > 0; ) {
-		ts::Node<T> * node = &(wList->nodes[i]);
+
+		std::shared_ptr<ts::Node<T>> node = wList->nodes[i];
 
 		// Increment parent nodes
 		for(unsigned j = 0; j < node->dependencies.size(); j++) {
-			derivatives[node->dependencies[j]] += incrementGradient(
-				&(derivatives[i]), node, j
+			derivatives[node->dependencies[j]] += node->incrementGradient(
+				derivatives[i], j
 			);
 		}
 	}

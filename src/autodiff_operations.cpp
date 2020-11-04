@@ -27,15 +27,15 @@ ts::Tensor<T> ts::operator+(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> grad;
 	grad.setOnes(x.value.rows(), x.value.cols());
 
-	return ts::Tensor<T>(
-		x.value + y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()}, ts::ElementWise,
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ElementWiseNode<T>(
+			{x.value.rows(), x.value.cols()},
 			grad, x.index,
 			grad, y.index
 		)
 	);
+
+	return ts::Tensor<T>(x.value + y.value, x.wList, nodePtr);
 }
 
 
@@ -60,15 +60,15 @@ ts::Tensor<T> ts::operator-(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> grad;
 	grad.setOnes(x.value.rows(), x.value.cols());
 
-	return ts::Tensor<T>(
-		x.value - y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()}, ts::ElementWise,
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ElementWiseNode<T>(
+			{x.value.rows(), x.value.cols()},
 			grad, x.index,
 			-1 * grad, y.index
 		)
 	);
+
+	return ts::Tensor<T>(x.value - y.value,x.wList, nodePtr);
 }
 
 
@@ -90,15 +90,15 @@ ts::Tensor<T> ts::operator*(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
 	// da / dx = y
 	// da / dy = x
 
-	return ts::Tensor<T>(
-		x.value * y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()}, ts::ElementWise,
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ElementWiseNode<T>(
+			{x.value.rows(), x.value.cols()},
 			y.value, x.index,
 			x.value, y.index
 		)
 	);
+
+	return ts::Tensor<T>(x.value * y.value,x.wList, nodePtr);
 }
 
 
@@ -120,15 +120,15 @@ ts::Tensor<T> ts::operator/(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
 	// da / dx = 1 / y
 	// da / dy = -x / y^2
 
-	return ts::Tensor<T>(
-		x.value + y.value,
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()}, ts::ElementWise,
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ElementWiseNode<T>(
+			{x.value.rows(), x.value.cols()},
 			1.0 / y.value, x.index,
 			-x.value / (y.value * y.value), y.index
 		)
 	);
+
+	return ts::Tensor<T>(x.value + y.value, x.wList, nodePtr);
 }
 
 
@@ -151,15 +151,15 @@ ts::Tensor<T> ts::matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y) {
 	// da / dy = x^T
 	// (will be used in matrix product when computing gradient)
 
-	return ts::Tensor<T>(
-		x.value.matrix() * y.value.matrix(),
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), y.value.cols()}, ts::MatrixProduct,
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::MatProdNode<T>(
+			{x.value.rows(), y.value.cols()},
 			y.value.matrix().transpose(), x.index,
 			x.value.matrix().transpose(), y.index
 		)
 	);
+
+	return ts::Tensor<T>( x.value.matrix() * y.value.matrix(), x.wList, nodePtr);
 }
 
 
@@ -171,14 +171,14 @@ ts::Tensor<T> ts::sigmoid(const ts::Tensor<T> &x) {
 	// a = e^x / (e^x + 1) = 1 / (1 + e^-x)
 	// da / dx = e^x / (e^x + 1)^2
 
-	return ts::Tensor<T>(
-		x.value.exp() / (x.value.exp() + 1),
-		x.wList,
-		ts::Node<T>(
-			{x.value.rows(), x.value.cols()}, ts::ElementWise,
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ElementWiseNode<T>(
+			{x.value.rows(), x.value.cols()},
 			x.value.exp() / (x.value.exp() + 1).pow(2), x.index
 		)
 	);
+
+	return ts::Tensor<T>(x.value.exp() / (x.value.exp() + 1), x.wList, nodePtr);
 }
 
 
@@ -190,17 +190,17 @@ ts::Tensor<T> ts::squaredNorm(const ts::Tensor<T> &x) {
 	// The gradient will have to be computed for a scalar
 	x.wList->elementWiseOnly = false;
 
-	// a = norm()
+	// a = norm()^2
 	// da / dx = 2x
+
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ScalarNode<T>(
+			{1, 1},2 * x.value.matrix(), x.index
+		)
+	);
 
 	Eigen::Array<T, 1, 1> res;
 	res << (T) x.value.matrix().squaredNorm();
-	return ts::Tensor<T>(
-		res,
-		x.wList,
-		ts::Node<T>(
-			{1, 1}, ts::Norm,
-			2 * x.value.matrix(), x.index
-		)
-	);
+	
+	return ts::Tensor<T>(res, x.wList, nodePtr);
 }

@@ -14,6 +14,11 @@
 	// float
 
 template class ts::Node<float>;
+template class ts::InputNode<float>;
+template class ts::ElementWiseNode<float>;
+template class ts::MatProdNode<float>;
+template class ts::ScalarNode<float>;
+
 template class ts::WengertList<float>;
 template class ts::Tensor<float>;
 template class ts::Gradient<float>;
@@ -37,6 +42,11 @@ template ts::Tensor<float> ts::squaredNorm(const ts::Tensor<float> &x);
 	// double
 
 template class ts::Node<double>;
+template class ts::InputNode<double>;
+template class ts::ElementWiseNode<double>;
+template class ts::MatProdNode<double>;
+template class ts::ScalarNode<double>;
+
 template class ts::WengertList<double>;
 template class ts::Tensor<double>;
 template class ts::Gradient<double>;

@@ -13,13 +13,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install gtest
+    - name: Install gtest/Eigen
       run: |
-        sudo apt install libgtest-dev cmake
+        sudo apt install libgtest-dev libeigen3-dev cmake
         cd /usr/src/gtest
         sudo cmake CMakeLists.txt
         sudo make
         sudo cp *.a /usr/lib
+        cd /usr/include
+        sudo ln -sf eigen3/Eigen Eigen
     - name: Build
       run: make test
     - name: Run

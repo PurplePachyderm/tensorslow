@@ -6,6 +6,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include <Eigen/Dense>
 
@@ -13,6 +14,11 @@
 
 namespace ts {
 	template <typename T> class Node;
+	template <typename T> class InputNode;
+	template <typename T> class ElementWiseNode;
+	template <typename T> class MatProdNode;
+	template <typename T> class ScalarNode;
+
 	template <typename T> class WengertList;
 	template <typename T> class Tensor;
 	template <typename T> class Gradient;
@@ -27,15 +33,6 @@ namespace ts {
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
 		ts::WengertList<T> * newWList
 	);
-
-
-	enum OperationType {
-		None,
-		ElementWise,
-		MatrixProduct,
-		Norm
-	};
-
 
 	template <typename T>
 	ts::Tensor<T> operator+(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
@@ -63,24 +60,30 @@ private:
 	Node(std::vector<long> shape);
 
 	// Represents a unary operator
-	Node(std::vector<long> shape, ts::OperationType newOperationType,
+	Node(std::vector<long> shape,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep
 	);
 
 	// Represents a binary operator
 	Node(
-		std::vector<long> shape, ts::OperationType newOperationType,
+		std::vector<long> shape,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> yVal, int yDep
 	);
 
 
-	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > values{};
 	std::vector<int> dependencies{};
 
 	// Shape of the corresponding tensor
 	unsigned rows, cols;
-	ts::OperationType operationType = ts::None;
+
+	virtual Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	) = 0;
+
+protected:
+	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > values{};
 
 public:
 
@@ -94,6 +97,59 @@ public:
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
+
+};
+
+
+
+template <typename T>
+class ts::InputNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+};
+
+
+
+template <typename T>
+class ts::ElementWiseNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+};
+
+
+
+template <typename T>
+class ts::MatProdNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+};
+
+
+
+template <typename T>
+class ts::ScalarNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
 };
 
 
@@ -101,7 +157,7 @@ public:
 template <typename T>
 class ts::WengertList {
 private:
-	std::vector<ts::Node<T>> nodes{};
+	std::vector< std::shared_ptr<ts::Node<T>> > nodes{};
 	bool elementWiseOnly = true;
 
 public:
@@ -129,12 +185,7 @@ private:
 	// thus allows us to create a Tensor with dependencies in the Wengert list.
 	Tensor(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
-		ts::WengertList<T> * newWList, ts::Node<T> node
-	);
-
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
-			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> * childDerivative,
-			ts::Node<T> * node, unsigned j
+		ts::WengertList<T> * newWList, std::shared_ptr<ts::Node<T>> node
 	);
 
 public:
