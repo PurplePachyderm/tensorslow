@@ -46,6 +46,16 @@ ts::Node<T>::Node(
 
 
 template <typename T>
+ts::InputNode<T>::InputNode(std::vector<long> shape, ts::Tensor<T>* tensorPtr) {
+	rows = shape[0];
+	cols = shape[1];
+
+	sourceTensor = tensorPtr;
+};
+
+
+
+template <typename T>
 Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::InputNode<T>::incrementGradient(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 		unsigned &j
@@ -127,6 +137,23 @@ int ts::WengertList<T>::size() {
 
 
 
+template <typename T>
+int ts::WengertList<T>::reset() {
+	// Used to remove all nodes but the input nodes, so the input tensors can
+	// be reused in new computations. Returns the new size of the list.
+
+	for(unsigned i = 0; i < nodes.size(); i++) {
+		// If the node is not an input (eq. to: has dependencies)
+		if(nodes[i]->dependencies.size() != 0) {
+			nodes.erase(nodes.begin() + i);
+		}
+	}
+
+	return nodes.size();
+}
+
+
+
 	// ts::Tensor
 
 template <typename T>
@@ -144,7 +171,7 @@ ts::Tensor<T>::Tensor(
 
 		// Node without dependencies (input var)
 		std::shared_ptr<ts::Node<T>> nodePtr (
-			new ts::ElementWiseNode<T>({newValue.rows(), newValue.cols()})
+			new ts::InputNode<T>({newValue.rows(), newValue.cols()}, this)
 		);
 
 		wList->nodes.push_back(nodePtr);

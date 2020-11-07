@@ -53,6 +53,8 @@ namespace ts {
 
 
 
+// ts::Node
+
 template <typename T>
 class ts::Node {
 private:
@@ -88,6 +90,7 @@ protected:
 public:
 
 	friend ts::Tensor<T>;
+	friend ts::WengertList<T>;
 
 	friend ts::Tensor<T> operator+<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator-<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
@@ -106,6 +109,13 @@ template <typename T>
 class ts::InputNode : public ts::Node<T> {
 private:
 	using ts::Node<T>::Node;
+	InputNode(std::vector<long> shape, ts::Tensor<T>* tensorPtr);
+
+	// We will need this to optimize the tensor value in a ts::Model
+	std::unique_ptr<ts::Node<T>> sourceTensor;
+
+	// Shape of the corresponding tensor
+	unsigned rows, cols;
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
@@ -154,6 +164,8 @@ private:
 
 
 
+	// ts::WengertList
+
 template <typename T>
 class ts::WengertList {
 private:
@@ -162,6 +174,7 @@ private:
 
 public:
 	int size();
+	int reset();
 
 	friend class ts::Tensor<T>;
 
@@ -172,6 +185,8 @@ public:
 };
 
 
+
+	// ts::Tensor
 
 template <typename T>
 class ts::Tensor {
@@ -209,6 +224,8 @@ public:
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 };
 
+
+
 template <typename T>
 ts::Tensor<T> NewTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
@@ -216,6 +233,8 @@ ts::Tensor<T> NewTensor(
 );
 
 
+
+	// ts::Gradient
 
 template <typename T>
 class ts::Gradient {
