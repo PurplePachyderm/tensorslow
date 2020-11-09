@@ -201,6 +201,6 @@ ts::Tensor<T> ts::squaredNorm(const ts::Tensor<T> &x) {
 
 	Eigen::Array<T, 1, 1> res;
 	res << (T) x.value.matrix().squaredNorm();
-	
+
 	return ts::Tensor<T>(res, x.wList, nodePtr);
 }

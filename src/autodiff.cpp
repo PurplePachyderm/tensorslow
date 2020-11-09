@@ -46,16 +46,6 @@ ts::Node<T>::Node(
 
 
 template <typename T>
-ts::InputNode<T>::InputNode(std::vector<long> shape, ts::Tensor<T>* tensorPtr) {
-	rows = shape[0];
-	cols = shape[1];
-
-	sourceTensor = tensorPtr;
-};
-
-
-
-template <typename T>
 Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::InputNode<T>::incrementGradient(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 		unsigned &j
@@ -142,9 +132,21 @@ int ts::WengertList<T>::reset() {
 	// Used to remove all nodes but the input nodes, so the input tensors can
 	// be reused in new computations. Returns the new size of the list.
 
+	// First pass : remove non inputVariables
 	for(unsigned i = 0; i < nodes.size(); i++) {
-		// If the node is not an input (eq. to: has dependencies)
+		// If the node is not an input (has no dependencies)
 		if(nodes[i]->dependencies.size() != 0) {
+			nodes.erase(nodes.begin() + i);
+		}
+	}
+
+	// Second pass : remove non optimizable (eg. input data instances of a ts::Model)
+	for(unsigned i = 0; i < nodes.size(); i++) {
+		std::shared_ptr<ts::InputNode<T>> inputPtr =
+		std::dynamic_pointer_cast<ts::InputNode<T>>(nodes[i]);
+
+		// If the node is not optimizable (has a null optimizedTensor)
+		if(inputPtr->optimizedTensor == NULL) {
 			nodes.erase(nodes.begin() + i);
 		}
 	}
@@ -156,23 +158,30 @@ int ts::WengertList<T>::reset() {
 
 	// ts::Tensor
 
+// Input and (potentially) optimizable
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
-	ts::WengertList<T> * newWList
+	ts::WengertList<T> * newWList, bool optimizable
 ) {
 	value = newValue;
-
 	wList = newWList;
 
 	if(wList != NULL) {
 		// Add new Tensor to the Wengert list
 		index = wList->nodes.size();
 
-		// Node without dependencies (input var)
-		std::shared_ptr<ts::Node<T>> nodePtr (
-			new ts::InputNode<T>({newValue.rows(), newValue.cols()}, this)
+		// Node without dependencies (input var,)
+		std::shared_ptr<ts::InputNode<T>> inputNodePtr (
+			new ts::InputNode<T>({newValue.rows(), newValue.cols()})
 		);
+
+		if(optimizable) {
+			inputNodePtr->optimizedTensor = this;
+		}
+
+		std::shared_ptr<ts::Node<T>> nodePtr =
+		std::static_pointer_cast<ts::InputNode<T>>(inputNodePtr);
 
 		wList->nodes.push_back(nodePtr);
 	} else {
@@ -182,6 +191,33 @@ ts::Tensor<T>::Tensor(
 
 
 
+// Input and not optimizable
+template <typename T>
+ts::Tensor<T>::Tensor(
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
+	ts::WengertList<T> * newWList
+) {
+	value = newValue;
+	wList = newWList;
+
+	if(wList != NULL) {
+		// Add new Tensor to the Wengert list
+		index = wList->nodes.size();
+
+		// Node without dependencies (input var,)
+		std::shared_ptr<ts::Node<T>> nodePtr (
+			new ts::InputNode<T>({newValue.rows(), newValue.cols()})
+		);
+
+		wList->nodes.push_back(nodePtr);
+	} else {
+		index = -1;
+	}
+};
+
+
+
+// Tensor with dependencies, not optimizable
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
@@ -203,6 +239,7 @@ ts::Tensor<T>::Tensor(
 
 
 // Helper function to create new instances without syntax template
+// (not optimizable)
 template <typename T>
 ts::Tensor<T> ts::NewTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
