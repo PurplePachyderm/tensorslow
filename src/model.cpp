@@ -12,9 +12,8 @@
 
 template <typename T>
 ts::MultiLayerPerceptron<T>::MultiLayerPerceptron(
-	unsigned newInputSize, std::vector<unsigned> layers
+	unsigned inputSize, std::vector<unsigned> layers
 ) {
-	inputSize = newInputSize;
 
 	// Each element of the layers vector is a new layer, its value represents
 	// the layer size. Values are randomly initialized between 0 and 1.
@@ -43,8 +42,9 @@ ts::MultiLayerPerceptron<T>::MultiLayerPerceptron(
 template <typename T>
 ts::Tensor<T> ts::MultiLayerPerceptron<T>::compute(ts::Tensor<T> input) {
 
-	// Assert expected size and wList
-	if(input.getValue().rows() != inputSize || input.getValue().cols() != 1) {
+	// Assert expected size
+	if(input.getValue().rows() != weights[0].getValue().cols() ||
+	input.getValue().cols() != 1) {
 		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
 	}
 
@@ -55,7 +55,7 @@ ts::Tensor<T> ts::MultiLayerPerceptron<T>::compute(ts::Tensor<T> input) {
 
 	// Begin computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
-		input = (*activationFunction)(weights[i] * input + biases[i]);
+		input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
 	}
 
 	return input;

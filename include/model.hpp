@@ -43,10 +43,7 @@ private:
 	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 public:
-	MultiLayerPerceptron(unsigned newInputSize, std::vector<unsigned> layers);
-
-	// Size of the expected column-vector input
-	unsigned inputSize = 1;
+	MultiLayerPerceptron(unsigned iInputSize, std::vector<unsigned> layers);
 
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
