@@ -49,9 +49,16 @@ namespace ts {
 	ts::Tensor<T> sigmoid(const ts::Tensor<T> &x);
 	template <typename T>
 	ts::Tensor<T> squaredNorm(const ts::Tensor<T> &x);
+
+
+	// Forward declaration of friends (not related to audodiff)
+	template <typename T> class GaElement;
+	template <typename T> class GradientAccumulator;
 }
 
 
+
+	// ts::Node
 
 template <typename T>
 class ts::Node {
@@ -74,8 +81,9 @@ private:
 
 	std::vector<int> dependencies{};
 
-	// Shape of the corresponding tensor
-	unsigned rows, cols;
+	// We will need this to optimize the tensor value in a ts::Model
+	ts::Tensor<T> * optimizedTensor = NULL;
+
 
 	virtual Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
@@ -84,10 +92,14 @@ private:
 
 protected:
 	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > values{};
+	// Shape of the corresponding tensor
+	long rows, cols;
 
 public:
 
 	friend ts::Tensor<T>;
+	friend ts::WengertList<T>;
+	friend ts::GradientAccumulator<T>;
 
 	friend ts::Tensor<T> operator+<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator-<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
@@ -111,6 +123,12 @@ private:
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 			unsigned &j
 	);
+
+public:
+
+	friend ts::WengertList<T>;
+	friend ts::Tensor<T>;
+	friend ts::GradientAccumulator<T>;
 };
 
 
@@ -154,16 +172,23 @@ private:
 
 
 
+	// ts::WengertList
+
 template <typename T>
 class ts::WengertList {
 private:
-	std::vector< std::shared_ptr<ts::Node<T>> > nodes{};
 	bool elementWiseOnly = true;
+	std::vector< std::shared_ptr<ts::Node<T>> > nodes{};
 
 public:
 	int size();
+	int reset();
+
+	// Make a tensor optimizable
+	void toggleOptimize(ts::Tensor<T> * tensor, bool enable);
 
 	friend class ts::Tensor<T>;
+	friend class ts::GradientAccumulator<T>;
 
 	// Other non-element wise operations (to change elementWiseOnly)
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
@@ -173,11 +198,13 @@ public:
 
 
 
+	// ts::Tensor
+
 template <typename T>
 class ts::Tensor {
 private:
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> value;
-	ts::WengertList<T> * wList;
+	ts::WengertList<T> * wList = NULL;
 	int index;
 
 	// We want this constructor to be private as it is supposed to be called by
@@ -189,15 +216,25 @@ private:
 	);
 
 public:
+
+	Tensor() {};
+
+	// Non optimizable input tensor (calling previous constructor with
+	// optimizable = false)
 	Tensor(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
-		ts::WengertList<T> * wList
+		ts::WengertList<T> * newWList
 	);
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> getValue();
 	ts::Gradient<T> grad();
 
+
+	friend ts::WengertList<T>;
+
 	friend ts::Gradient<T>;
+	friend ts::GaElement<T>;
+	friend ts::GradientAccumulator<T>;
 
 	friend ts::Tensor<T> operator+<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator-<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
@@ -209,6 +246,8 @@ public:
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 };
 
+
+
 template <typename T>
 ts::Tensor<T> NewTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
@@ -216,6 +255,8 @@ ts::Tensor<T> NewTensor(
 );
 
 
+
+	// ts::Gradient
 
 template <typename T>
 class ts::Gradient {
@@ -233,4 +274,5 @@ public:
 	bool isEmpty();
 
 	friend class ts::Tensor<T>;
+	friend class ts::GradientAccumulator<T>;
 };

@@ -5,3 +5,5 @@
 #pragma once
 
 #include "autodiff.hpp"
+#include "model.hpp"
+#include "optimizer.hpp"

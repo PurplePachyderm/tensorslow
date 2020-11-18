@@ -127,41 +127,86 @@ int ts::WengertList<T>::size() {
 
 
 
+template <typename T>
+int ts::WengertList<T>::reset() {
+	// Used to remove all nodes but the input nodes, so the input tensors can
+	// be reused in new computations. Returns the new size of the list.
+
+	// First pass : remove non optimizable variables
+	for(unsigned i = nodes.size(); i-- > 0; ) {
+
+		// If the node is not an input (has no dependencies)
+		if(nodes[i]->dependencies.size() != 0) {
+			nodes.erase(nodes.begin() + i);
+		}
+
+		// Input node
+		else {
+			// If the node is not optimizable (has a null optimizedTensor)
+			if(!(nodes[i]->optimizedTensor)) {
+				nodes.erase(nodes.begin() + i);
+			}
+		}
+	}
+
+	// Second pass : update tensors indices
+	for(unsigned i = nodes.size(); i-- > 0; ) {
+		nodes[i]->optimizedTensor->index = i;
+	}
+
+
+	return nodes.size();
+}
+
+
+
+template <typename T>
+void ts::WengertList<T>::toggleOptimize(ts::Tensor<T> * tensor, bool enable) {
+	if(enable) {
+		nodes[tensor->index]->optimizedTensor = tensor;
+	}
+	else {
+		nodes[tensor->index]->optimizedTensor = NULL;
+	}
+}
+
+
+
 	// ts::Tensor
 
+// Input and not optimizable
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
 	ts::WengertList<T> * newWList
 ) {
 	value = newValue;
-
 	wList = newWList;
 
 	if(wList != NULL) {
 		// Add new Tensor to the Wengert list
 		index = wList->nodes.size();
 
-		// Node without dependencies (input var)
+		// Node without dependencies (input var,)
 		std::shared_ptr<ts::Node<T>> nodePtr (
-			new ts::ElementWiseNode<T>({newValue.rows(), newValue.cols()})
+			new ts::InputNode<T>({newValue.rows(), newValue.cols()})
 		);
 
 		wList->nodes.push_back(nodePtr);
 	} else {
 		index = -1;
 	}
-}
+};
 
 
 
+// Tensor with dependencies, not optimizable
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
 	ts::WengertList<T> * newWList, std::shared_ptr<ts::Node<T>> node
 ) {
 	value = newValue;
-
 	wList = newWList;
 
 	if(wList != NULL) {
@@ -176,6 +221,7 @@ ts::Tensor<T>::Tensor(
 
 
 // Helper function to create new instances without syntax template
+// (not optimizable)
 template <typename T>
 ts::Tensor<T> ts::NewTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,

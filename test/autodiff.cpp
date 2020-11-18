@@ -7,14 +7,13 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
-#include <iomanip>
 #include <math.h>
 
 #include "../include/tensorslow.h"
 
 
 
-TEST(AutodiffTest, SimpleSum) {
+TEST(Operators, SimpleSum) {
 	// Simple test of + operator (on scalars)
 	ts::WengertList<float> wList;
 
@@ -40,7 +39,7 @@ TEST(AutodiffTest, SimpleSum) {
 
 
 
-TEST(AutodiffTest, SimpleDiff) {
+TEST(Operators, SimpleDiff) {
 	// Simple test of - operator (on scalars)
 	ts::WengertList<float> wList;
 
@@ -66,7 +65,7 @@ TEST(AutodiffTest, SimpleDiff) {
 
 
 
-TEST(AutodiffTest, SimpleProd) {
+TEST(Operators, SimpleProd) {
 	// Simple test of * operator (on scalars)
 	ts::WengertList<float> wList;
 
@@ -92,7 +91,7 @@ TEST(AutodiffTest, SimpleProd) {
 
 
 
-TEST(AutodiffTest, SimpleDiv) {
+TEST(Operators, SimpleDiv) {
 	// Simple test of / operator (on scalars)
 	ts::WengertList<float> wList;
 
