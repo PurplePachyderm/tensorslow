@@ -190,12 +190,12 @@ ts::Tensor<T> ts::squaredNorm(const ts::Tensor<T> &x) {
 	// The gradient will have to be computed for a scalar
 	x.wList->elementWiseOnly = false;
 
-	// a = norm()^2
+	// a = norm(x)^2
 	// da / dx = 2x
 
 	std::shared_ptr<ts::Node<T>> nodePtr (
 		new ts::ScalarNode<T>(
-			{1, 1},2 * x.value.matrix(), x.index
+			{1, 1}, 2 * x.value.matrix(), x.index
 		)
 	);
 

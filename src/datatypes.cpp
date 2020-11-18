@@ -42,8 +42,12 @@ template ts::Tensor<float> ts::squaredNorm(const ts::Tensor<float> &x);
 
 
 template class ts::Model<float>;
+template class ts::Polynom<float>;
 template class ts::MultiLayerPerceptron<float>;
 
+template class ts::TrainingData<float>;
+template class ts::GaElement<float>;
+template class ts::GradientAccumulator<float>;
 template class ts::Optimizer<float>;
 template class ts::GradientDescentOptimizer<float>;
 
@@ -76,7 +80,11 @@ template ts::Tensor<double> ts::sigmoid(const ts::Tensor<double> &x);
 template ts::Tensor<double> ts::squaredNorm(const ts::Tensor<double> &x);
 
 template class ts::Model<double>;
+template class ts::Polynom<double>;
 template class ts::MultiLayerPerceptron<double>;
 
+template class ts::TrainingData<double>;
+template class ts::GaElement<double>;
+template class ts::GradientAccumulator<double>;
 template class ts::Optimizer<double>;
 template class ts::GradientDescentOptimizer<double>;

@@ -10,7 +10,10 @@
 	// ts::TrainingData
 
 template <typename T>
-ts::TrainingData<T>::TrainingData(ts::Tensor<T> newInput, ts::Tensor<T> newExpected) {
+ts::TrainingData<T>::TrainingData(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newInput,
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newExpected
+) {
 	input = newInput;
 	expected = newExpected;
 }
@@ -21,12 +24,14 @@ ts::TrainingData<T>::TrainingData(ts::Tensor<T> newInput, ts::Tensor<T> newExpec
 
 template <typename T>
 ts::GaElement<T>::GaElement(ts::Tensor<T> * inputTensor) {
-	gradSum.setZero(
-		inputTensor->getValue().rows(),
-		inputTensor->getValue().cols()
-	);
+
+	unsigned rows = inputTensor->value.rows();
+	unsigned cols = inputTensor->value.cols();
+
+	gradSum = Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>::Zero(rows, cols);
 
 	index = inputTensor->index;
+
 }
 
 
@@ -55,21 +60,13 @@ ts::GradientAccumulator<T>::GradientAccumulator(ts::Model<T> &model) {
 
 	for(unsigned i=0; i<model.wList.nodes.size(); i++) {
 
-		// If we encounter an input node
-		// NOTE If statement useless because of wList.reset(). Remove later ?
-		if(model.wList.nodes[i]->dependencies.size() == 0) {
+		// Check if it is associated with a tensor (== optimizable)
+		if(model.wList.nodes[i]->optimizedTensor != NULL) {
 
-			std::shared_ptr<ts::InputNode<T>> inputPtr =
-			std::dynamic_pointer_cast<ts::InputNode<T>>(model.wList.nodes[i]);
-
-			// Check if it is associated with a tensor (== optimizable)
-			if(inputPtr->optimizedTensor != NULL) {
-
-				// Then append it to the gradient accumulator
-				elements.push_back(ts::GaElement<T>(
-					inputPtr->optimizedTensor
-				));
-			}
+			// Then append it to the gradient accumulator
+			elements.push_back(ts::GaElement<T>(
+				model.wList.nodes[i]->optimizedTensor
+			));
 		}
 	}
 }
@@ -90,8 +87,7 @@ void ts::GradientAccumulator<T>::increment(ts::Gradient<T> &gradient) {
 	// Increment all elements of gradAccumulator according to gradient
 
 	for(unsigned i=0; i<elements.size(); i++) {
-		elements[i].gradSum +=
-		gradient.derivatives[elements[i].index];
+		elements[i].gradSum += gradient.derivatives[elements[i].index];
 	}
 }
 
@@ -103,13 +99,7 @@ void ts::GradientAccumulator<T>::updateTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> value
 ) {
 	// Update a tensor via the gradient accumulator
-
-	std::shared_ptr<ts::InputNode<T>> inputPtr =
-	std::dynamic_pointer_cast<ts::InputNode<T>>(model.wList.nodes[i]);
-
-	// Update tensor associated to node
-	inputPtr->optimizedTensor->value -= value;
-
+	model.wList.nodes[i]->optimizedTensor->value -= value;
 }
 
 
@@ -146,7 +136,7 @@ void ts::GradientDescentOptimizer<T>::updateModel(
 	for(unsigned i=0; i<this->gradAccumulator.elements.size(); i++) {
 		this->gradAccumulator.updateTensor(
 			model, i,
-			(learningRate * this->gradAccumulator.elements[i].gradSum) / batchSize
+			learningRate * this->gradAccumulator.elements[i].gradSum / batchSize
 		);
 	}
 }
@@ -158,9 +148,11 @@ void ts::GradientDescentOptimizer<T>::run(
 	ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches
 ) {
 
+		// Set up gradient accumulator (this also resets wList)	
 	this->gradAccumulator = ts::GradientAccumulator<T>(model);
 
-	// Start running and training the model
+
+		// Start running and training the model
 
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
@@ -168,24 +160,36 @@ void ts::GradientDescentOptimizer<T>::run(
 		// Batches
 		for(unsigned j=0; j<batches.size(); j++) {
 
-
 			// Data instance
 			for(unsigned k=0; k<batches[j].size(); k++) {
 
+				ts::Tensor<T> input = ts::Tensor<T>(batches[j][k].input, &(model.wList));
+				ts::Tensor<T> expected = ts::Tensor<T>(batches[j][k].expected, &(model.wList));
+
 				// Compute model and norm
-				ts::Tensor<T> output = model.compute(batches[j][k].input);
-				ts::Tensor<T> norm = (*this->normFunction)(output);
+				ts::Tensor<T> output = model.compute(input);
+				ts::Tensor<T> norm = (*this->normFunction)(output - expected);
+
+				// Keeping this line for now for debugging purpose
+				std::cout << "[RUN](" << i << ", " << j << ", " << k << ") norm = " << norm.getValue() << std::endl;
 
 				// Get gradient and increment gradient accumulator
 				ts::Gradient<T> gradient = norm.grad();
 				this->gradAccumulator.increment(gradient);
 
+				model.wList.reset();
+
 			}
 
 			updateModel(model, batches[j].size());
 			this->gradAccumulator.reset();
+
+			// Keeping this line for now for debugging purpose
+			std::cout << "*********************************" << std::endl;
 		}
 	}
 
+
+		// Clean
 	this->gradAccumulator.clear();
 }

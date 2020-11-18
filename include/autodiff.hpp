@@ -81,6 +81,9 @@ private:
 
 	std::vector<int> dependencies{};
 
+	// We will need this to optimize the tensor value in a ts::Model
+	ts::Tensor<T> * optimizedTensor = NULL;
+
 
 	virtual Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
@@ -115,9 +118,6 @@ template <typename T>
 class ts::InputNode : public ts::Node<T> {
 private:
 	using ts::Node<T>::Node;
-
-	// We will need this to optimize the tensor value in a ts::Model
-	ts::Tensor<T> * optimizedTensor = NULL;
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
@@ -177,12 +177,15 @@ private:
 template <typename T>
 class ts::WengertList {
 private:
-	std::vector< std::shared_ptr<ts::Node<T>> > nodes{};
 	bool elementWiseOnly = true;
+	std::vector< std::shared_ptr<ts::Node<T>> > nodes{};
 
 public:
 	int size();
 	int reset();
+
+	// Make a tensor optimizable
+	void toggleOptimize(ts::Tensor<T> * tensor, bool enable);
 
 	friend class ts::Tensor<T>;
 	friend class ts::GradientAccumulator<T>;
@@ -214,14 +217,7 @@ private:
 
 public:
 
-	// Input tensor might be optimizable (if boolean is true) -> only for tensors
-	// that are part of a model parameter
-	// WARNING Should be called in ts::Member derived classes only
-	// (made public for now => create interface class later ?)
-	Tensor(
-		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
-		ts::WengertList<T> * newWList, bool optimizable
-	);
+	Tensor() {};
 
 	// Non optimizable input tensor (calling previous constructor with
 	// optimizable = false)
@@ -233,6 +229,8 @@ public:
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> getValue();
 	ts::Gradient<T> grad();
 
+
+	friend ts::WengertList<T>;
 
 	friend ts::Gradient<T>;
 	friend ts::GaElement<T>;

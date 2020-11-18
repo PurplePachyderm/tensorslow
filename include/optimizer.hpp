@@ -10,6 +10,7 @@
 #include "model.hpp"
 
 #include <vector>
+#include <iostream>
 
 namespace ts {
 	template <typename T> class TrainingData;
@@ -32,10 +33,13 @@ class ts::TrainingData {
 private:
 
 public:
-	TrainingData(ts::Tensor<T> newInput, ts::Tensor<T> newExpected);
+	TrainingData(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>,
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newExpected
+	);
 
-	ts::Tensor<T> input;
-	ts::Tensor<T> expected;
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> input;
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> expected;
 };
 
 

@@ -10,6 +10,8 @@
 
 namespace ts {
 	template <typename T> class Model;
+
+	template <typename T> class Polynom;
 	template <typename T> class MultiLayerPerceptron;
 
 	// Friends forward declaration
@@ -27,10 +29,35 @@ private:
 public:
 	ts::WengertList<T> wList;
 
+	// Call the WengertList toggleOptimize method
+	void toggleOptimize(ts::Tensor<T> * tensor, bool enable);
+
 	// General method for computing the model forward pass
 	virtual ts::Tensor<T> compute(ts::Tensor<T> input) = 0;
 
 	friend ts::GradientAccumulator<T>;
+};
+
+
+
+	// ts::Polynom
+	// (element-wise polynom for nxn tensors)
+
+template <typename T>
+class ts::Polynom : public ts::Model<T> {
+private:
+	long nRows = 0;
+	long nCols = 0;
+
+public:
+	Polynom(unsigned order, std::vector<long> size);
+
+	std::vector<ts::Tensor<T>> coefficients = {};
+
+	ts::Tensor<T> compute(ts::Tensor<T> input);
+
+	long rows();
+	long cols();
 };
 
 
@@ -48,6 +75,5 @@ public:
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
 
-	// Method accepting 1 input tensor and returning the model's output tensor
 	ts::Tensor<T> compute(ts::Tensor<T> input);
 };
