@@ -34,7 +34,7 @@ private:
 
 public:
 	TrainingData(
-		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>,
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newInput,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newExpected
 	);
 
@@ -117,7 +117,7 @@ public:
 	unsigned epochs = 1;
 
 	// Optimizes the model by running its compute() method on the batches data
-	virtual void run(
+	virtual std::vector<std::vector<std::vector< T >>> run(
 		ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches
 	) = 0;
 
@@ -137,7 +137,7 @@ public:
 
 	T learningRate = 0.1;
 
-	void run(
+	std::vector<std::vector<std::vector< T >>> run(
 		ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches
 	);
 };

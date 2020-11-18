@@ -17,13 +17,13 @@ TEST(GradientDescent, Polynom) {
 	int rows = 1;
 	int cols = 1;
 
-	float learningRate = 0.0001;
+	float learningRate = 0.000012;
 
 	float valSpan = 5.0f;
 	float inputSpan = 10.0f;
 
 	unsigned nEpochs = 3;
-	unsigned nBatches = 40;
+	unsigned nBatches = 20;
 	unsigned nElements = 5;
 
 
@@ -74,11 +74,45 @@ TEST(GradientDescent, Polynom) {
 		// Train model
 
 	optimizer.epochs = nEpochs;
-	optimizer.run(model, trainingData);
+	std::vector<std::vector<std::vector< float >>> losses = optimizer.run(model, trainingData);
 
-	// TODO Finish test (by comparing costs after each epochs ?)
 	// WARNING Gradient descent seems to perform bady at polynomial regression.
-	// Try with lineat or other ?
+	// Try with linear or other ?
+
+
+		// Compute avg losses of each epoch
+
+	std::vector<float> epochsLosses = {};
+
+	for(unsigned i=0; i<losses.size(); i++) {
+
+		epochsLosses.push_back(0);
+
+		for(unsigned j=0; j<losses[i].size(); j++) {
+
+			float sum = 0;
+
+			for(unsigned k=0; k<losses[i][k].size(); k++) {
+				sum += losses[i][j][k];
+			}
+
+			epochsLosses[i] += sum;
+
+			// Uncomment to print results for each batch
+			// std::cout << "Epoch " << i + 1 << " / Batch " << j + 1 << " : "
+			// << sum << std::endl;
+		}
+
+		// std::cout << std::endl;
+	}
+
+
+		// Comparing epochs total loss
+		// WARNING We assume all batches have the same size
+
+	for(unsigned i=1; i<epochsLosses.size(); i++) {
+		EXPECT_LE(epochsLosses[i], epochsLosses[i-1]);
+	}
 
 }
 

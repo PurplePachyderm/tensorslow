@@ -144,21 +144,28 @@ void ts::GradientDescentOptimizer<T>::updateModel(
 
 
 template <typename T>
-void ts::GradientDescentOptimizer<T>::run(
+std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 	ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches
 ) {
 
-		// Set up gradient accumulator (this also resets wList)	
+		// Set up gradient accumulator (this also resets wList)
+		
 	this->gradAccumulator = ts::GradientAccumulator<T>(model);
 
 
 		// Start running and training the model
 
+	std::vector<std::vector<std::vector< T >>> losses = {};
+
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
 
+		losses.push_back( {} );
+
 		// Batches
 		for(unsigned j=0; j<batches.size(); j++) {
+
+			losses[i].push_back( {} );
 
 			// Data instance
 			for(unsigned k=0; k<batches[j].size(); k++) {
@@ -170,26 +177,24 @@ void ts::GradientDescentOptimizer<T>::run(
 				ts::Tensor<T> output = model.compute(input);
 				ts::Tensor<T> norm = (*this->normFunction)(output - expected);
 
-				// Keeping this line for now for debugging purpose
-				std::cout << "[RUN](" << i << ", " << j << ", " << k << ") norm = " << norm.getValue() << std::endl;
-
 				// Get gradient and increment gradient accumulator
 				ts::Gradient<T> gradient = norm.grad();
 				this->gradAccumulator.increment(gradient);
 
 				model.wList.reset();
 
+				losses[i][j].push_back(norm.getValue()(0, 0));
 			}
 
 			updateModel(model, batches[j].size());
 			this->gradAccumulator.reset();
-
-			// Keeping this line for now for debugging purpose
-			std::cout << "*********************************" << std::endl;
 		}
 	}
 
 
 		// Clean
+
 	this->gradAccumulator.clear();
+
+	return losses;
 }
