@@ -60,13 +60,14 @@ ts::GradientAccumulator<T>::GradientAccumulator(ts::Model<T> &model) {
 
 	for(unsigned i=0; i<model.wList.nodes.size(); i++) {
 
+		std::shared_ptr<ts::InputNode<T>> inputPtr =
+		std::static_pointer_cast<ts::InputNode<T>>(model.wList.nodes[i]);
+
 		// Check if it is associated with a tensor (== optimizable)
-		if(model.wList.nodes[i]->optimizedTensor != NULL) {
+		if(inputPtr->optimizedTensor != NULL) {
 
 			// Then append it to the gradient accumulator
-			elements.push_back(ts::GaElement<T>(
-				model.wList.nodes[i]->optimizedTensor
-			));
+			elements.push_back(ts::GaElement<T>(inputPtr->optimizedTensor));
 		}
 	}
 }
@@ -99,7 +100,10 @@ void ts::GradientAccumulator<T>::updateTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> value
 ) {
 	// Update a tensor via the gradient accumulator
-	model.wList.nodes[i]->optimizedTensor->value -= value;
+	std::shared_ptr<ts::InputNode<T>> inputPtr =
+	std::static_pointer_cast<ts::InputNode<T>>(model.wList.nodes[i]);
+
+	inputPtr->optimizedTensor->value -= value;
 }
 
 
@@ -149,7 +153,7 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 ) {
 
 		// Set up gradient accumulator (this also resets wList)
-		
+
 	this->gradAccumulator = ts::GradientAccumulator<T>(model);
 
 

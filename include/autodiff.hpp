@@ -81,10 +81,6 @@ private:
 
 	std::vector<int> dependencies{};
 
-	// We will need this to optimize the tensor value in a ts::Model
-	ts::Tensor<T> * optimizedTensor = NULL;
-
-
 	virtual Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 			unsigned &j
@@ -123,6 +119,9 @@ private:
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 			unsigned &j
 	);
+
+	// We will need this to optimize the tensor value in a ts::Model
+	ts::Tensor<T> * optimizedTensor = NULL;
 
 public:
 

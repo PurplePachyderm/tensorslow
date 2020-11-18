@@ -142,8 +142,11 @@ int ts::WengertList<T>::reset() {
 
 		// Input node
 		else {
+			std::shared_ptr<ts::InputNode<T>> inputPtr =
+			std::static_pointer_cast<ts::InputNode<T>>(nodes[i]);
+
 			// If the node is not optimizable (has a null optimizedTensor)
-			if(!(nodes[i]->optimizedTensor)) {
+			if(!(inputPtr->optimizedTensor)) {
 				nodes.erase(nodes.begin() + i);
 			}
 		}
@@ -151,7 +154,10 @@ int ts::WengertList<T>::reset() {
 
 	// Second pass : update tensors indices
 	for(unsigned i = nodes.size(); i-- > 0; ) {
-		nodes[i]->optimizedTensor->index = i;
+		std::shared_ptr<ts::InputNode<T>> inputPtr =
+		std::static_pointer_cast<ts::InputNode<T>>(nodes[i]);
+
+		inputPtr->optimizedTensor->index = i;
 	}
 
 
@@ -162,11 +168,15 @@ int ts::WengertList<T>::reset() {
 
 template <typename T>
 void ts::WengertList<T>::toggleOptimize(ts::Tensor<T> * tensor, bool enable) {
+
+	std::shared_ptr<ts::InputNode<T>> inputPtr =
+	std::static_pointer_cast<ts::InputNode<T>>(nodes[tensor->index]);
+
 	if(enable) {
-		nodes[tensor->index]->optimizedTensor = tensor;
+		inputPtr->optimizedTensor = tensor;
 	}
 	else {
-		nodes[tensor->index]->optimizedTensor = NULL;
+		inputPtr->optimizedTensor = NULL;
 	}
 }
 
