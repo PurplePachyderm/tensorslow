@@ -40,6 +40,18 @@ Command | Effect | Target folder
 `make clean_examples` | Clean examples in `bin` | `bin`
 
 
+## Examples
+
+Before running the MNIST example, you must download the
+[MNIST dataset](http://yann.lecun.com/exdb/mnist/). You can do this by using
+the provided script (from the root of this repository) :
+
+`bash examples/get-mnist.sh`
+
+This will create a `bin/mnist` folder containing the uncompressed dataset
+for both training and testing phases. 
+
+
 ## Requirements
 
 - [Eigen](http://eigen.tuxfamily.org) : your compiler should have access
