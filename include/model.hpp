@@ -70,7 +70,7 @@ private:
 	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 public:
-	MultiLayerPerceptron(unsigned iInputSize, std::vector<unsigned> layers);
+	MultiLayerPerceptron(unsigned inputSize, std::vector<unsigned> layers);
 
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};

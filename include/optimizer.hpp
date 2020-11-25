@@ -54,7 +54,7 @@ private:
 	GaElement(ts::Tensor<T> * inputTensor);
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> gradSum;
-	unsigned index;	// in the ts::WengertList / ts::Gradient
+	unsigned index;	// in the ts::WengertList / ts::Gradient (see WARNING below)
 
 	void reset();
 
@@ -66,7 +66,11 @@ public:
 
 
 
-// ts::GradientAccumulator
+	// ts::GradientAccumulator
+	// A collection of accumulated gradient elements for all optimizable tensors
+	// of a model.
+	// WARNING The indices in this array are completely independent of those in
+	// the Wengert List, since some nodes may not be input or optimizable.
 
 template <typename T>
 class ts::GradientAccumulator {

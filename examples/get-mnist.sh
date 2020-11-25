@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# NOTE Run this script from the root og hte repository :
+# NOTE Run this script from the root of the repository :
 # $ bash examples/get-mnist.sh
 
-cd bin
+cd examples
 mkdir mnist
 cd mnist
 

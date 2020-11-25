@@ -23,6 +23,6 @@ jobs:
         cd /usr/include
         sudo ln -sf eigen3/Eigen Eigen
     - name: Build
-      run: make test
+      run: make tests
     - name: Run
       run: for i in bin/*_test; do $i; done

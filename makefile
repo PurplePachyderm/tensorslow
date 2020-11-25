@@ -9,7 +9,7 @@ TEST_FLAGS=-g -lgtest -lpthread
 SRC=src
 BIN=bin
 LIB=lib
-TEST=test
+TEST=tests
 PERF=perf
 EX=examples
 
@@ -27,7 +27,7 @@ LINK_FLAGS=-Wl,-rpath,$(LIB) -L$(LIB) -l$(SO_NAME)
 
 # Targets
 
-all: lib test perf examples
+all: lib tests perf examples
 
 
 lib: $(SO_PATH)
@@ -37,7 +37,7 @@ $(OBJ_FILES): $(LIB)/%.o : $(SRC)/%.cpp
 	$(CC) $(CPPFLAGS) $(OPT_FLAGS) $< -fPIC -c -o $@
 
 
-test: $(SO_PATH) $(TEST_FILES)
+tests: $(SO_PATH) $(TEST_FILES)
 $(TEST_FILES): $(BIN)/%_test: $(TEST)/%.cpp
 	$(CC) $< $(CPPFLAGS) $(OPT_FLAGS) $(TEST_FLAGS) $(LINK_FLAGS) -o $@
 
@@ -55,10 +55,10 @@ $(EX_FILES): $(BIN)/%_example: $(EX)/%.cpp
 
 # Phonies
 
-.PHONY: clean clean_lib clean_o clean_so clean_bin clean_test clean_perf clean_examples
+.PHONY: clean clean_lib clean_o clean_so clean_bin clean_tests clean_perf clean_examples
 
 
-clean: clean_lib clean_test clean_perf clean_examples
+clean: clean_lib clean_tests clean_perf clean_examples
 
 clean_lib:
 	find $(LIB) -name "*.o" -type f -delete
@@ -75,7 +75,7 @@ clean_bin:
 	find $(BIN) -name "*_perf" -type f -delete
 	find $(BIN) -name "*_example" -type f -delete
 
-clean_test:
+clean_tests:
 	find $(BIN) -name "*_test" -type f -delete
 
 clean_perf:

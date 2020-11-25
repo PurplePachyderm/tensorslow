@@ -88,6 +88,8 @@ void ts::GradientAccumulator<T>::increment(ts::Gradient<T> &gradient) {
 	// Increment all elements of gradAccumulator according to gradient
 
 	for(unsigned i=0; i<elements.size(); i++) {
+		// We use two different indices systems here
+		// (one for the wList/grad and one for the gradient accumulator)
 		elements[i].gradSum += gradient.derivatives[elements[i].index];
 	}
 }
@@ -174,8 +176,12 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 			// Data instance
 			for(unsigned k=0; k<batches[j].size(); k++) {
 
-				ts::Tensor<T> input = ts::Tensor<T>(batches[j][k].input, &(model.wList));
-				ts::Tensor<T> expected = ts::Tensor<T>(batches[j][k].expected, &(model.wList));
+				ts::Tensor<T> input = ts::Tensor<T>(
+					batches[j][k].input, &(model.wList)
+				);
+				ts::Tensor<T> expected = ts::Tensor<T>(
+					batches[j][k].expected, &(model.wList)
+				);
 
 				// Compute model and norm
 				ts::Tensor<T> output = model.compute(input);
