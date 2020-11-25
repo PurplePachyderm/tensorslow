@@ -1,5 +1,8 @@
 # TensorSlow
 
+![License: Unlicense](https://img.shields.io/badge/license-Unlicense-green)
+![Run all tests](https://github.com/PurplePachyderm/tensorslow/workflows/Run%20all%20tests/badge.svg)
+
 **[WIP]** Machine learning library implementing neural networks from scratch for a school project.
 
 
