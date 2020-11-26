@@ -104,8 +104,6 @@ class ts::Optimizer {
 private:
 
 protected:
-	ts::Tensor<T> (*normFunction)(const ts::Tensor<T>&) = &(ts::squaredNorm);
-
 	ts::GradientAccumulator<T> gradAccumulator;
 
 	void resetGradAccumulator();	// Set values to 0
@@ -117,6 +115,8 @@ protected:
 
 public:
 	Optimizer();
+
+	ts::Tensor<T> (*normFunction)(const ts::Tensor<T>&) = &(ts::squaredNorm);
 
 	unsigned epochs = 1;
 

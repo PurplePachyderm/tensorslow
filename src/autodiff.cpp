@@ -86,6 +86,10 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::MatProdNode<T>::incrementGra
 	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
 	// for a matrix-matrix product.
 
+	// BUG If two matrices of same dimensions are multiplied, for one of them,
+	// the wrong operand will be selected, resulting in a matrix of the wrong
+	// size.
+
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
 
 	// Make sure operands are at the correct position

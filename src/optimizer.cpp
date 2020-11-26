@@ -205,6 +205,7 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 		// Clean
 
 	this->gradAccumulator.clear();
+	model.wList.reset();
 
 	return losses;
 }

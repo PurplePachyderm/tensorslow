@@ -31,16 +31,19 @@ ts::Polynom<T>::Polynom(unsigned order, std::vector<long> size) {
 		);
 	}
 
-
-	// Has to be done in two loops to avoid address changes
-	for(unsigned i=0; i<order+1; i++) {
-		this->wList.toggleOptimize(&(coefficients[i]), true);
-	}
-
 	// Size of tensors
 	nRows = size[0];
 	nCols = size[1];
 
+}
+
+
+
+template <typename T>
+void ts::Polynom<T>::toggleGlobalOptimize(bool enable) {
+	for(unsigned i=0; i<coefficients.size(); i++) {
+		this->wList.toggleOptimize(&(coefficients[i]), enable);
+	}
 }
 
 
@@ -138,9 +141,15 @@ ts::MultiLayerPerceptron<T>::MultiLayerPerceptron(
 		);
 	}
 
+}
+
+
+
+template <typename T>
+void ts::MultiLayerPerceptron<T>::toggleGlobalOptimize(bool enable) {
 	for(unsigned i=0; i<weights.size(); i++) {
-		this->toggleOptimize(&(weights[i]), true);
-		this->toggleOptimize(&(biases[i]), true);
+		this->toggleOptimize(&(weights[i]), enable);
+		this->toggleOptimize(&(biases[i]), enable);
 	}
 }
 

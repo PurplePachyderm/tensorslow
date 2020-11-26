@@ -21,16 +21,14 @@ Command | Effect | Output folder
 The library's `.o` and `.so` files are built in the `lib` directory.
 Other executables are built in the `bin` directory with an adequate suffix.
 
-**Note** : Executables in the bin directory must be run from the root of the
+**Note** : Executables in the `bin` directory must be run from the root of the
 project to be able to find `libtensorslow.so`, or sometimes the examples
 data sets. As a general rule, always run binaries and scripts with the following
 command :
 
 `./bin/SOME_FILE`
 
-
 In order to clean the build directories, you can use the following phonies :
-
 
 Command | Effect | Target folder
 --- | --- | ---

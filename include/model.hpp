@@ -32,6 +32,9 @@ public:
 	// Call the WengertList toggleOptimize method
 	void toggleOptimize(ts::Tensor<T> * tensor, bool enable);
 
+	// Helper function to optimize the whole model
+	void toggleGlobalOptimize(bool enable);
+
 	// General method for computing the model forward pass
 	virtual ts::Tensor<T> compute(ts::Tensor<T> input) = 0;
 
@@ -54,6 +57,8 @@ public:
 
 	std::vector<ts::Tensor<T>> coefficients = {};
 
+	void toggleGlobalOptimize(bool enable);
+
 	ts::Tensor<T> compute(ts::Tensor<T> input);
 
 	long rows();
@@ -67,13 +72,16 @@ public:
 template <typename T>
 class ts::MultiLayerPerceptron : public ts::Model<T> {
 private:
-	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 public:
 	MultiLayerPerceptron(unsigned inputSize, std::vector<unsigned> layers);
 
+	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
+
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
+
+	void toggleGlobalOptimize(bool enable);
 
 	ts::Tensor<T> compute(ts::Tensor<T> input);
 };

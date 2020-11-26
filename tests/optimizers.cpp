@@ -30,6 +30,7 @@ TEST(GradientDescent, Polynom) {
 		// Create model and wList
 
 	ts::Polynom<float> model(2, {rows, cols});
+	model.toggleGlobalOptimize(true);
 
 	ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
