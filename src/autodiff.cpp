@@ -78,6 +78,28 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::ElementWiseNode<T>::incremen
 
 
 template <typename T>
+ts::MatProdNode<T>::MatProdNode(
+	std::vector<long> shape,
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> yVal, int yDep,
+	std::vector<long int> newXSize, std::vector<long int> newYSize
+) {
+
+	// MatProdNode specific constructor to store the size of the operands
+
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	this->values =  {xVal, yVal};	// [da/dx, da/dy]
+	this->dependencies =  {xDep, yDep};
+
+	xSize = newXSize;
+	ySize = newYSize;
+}
+
+
+
+template <typename T>
 Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::MatProdNode<T>::incrementGradient(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 		unsigned &j
@@ -86,18 +108,28 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::MatProdNode<T>::incrementGra
 	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
 	// for a matrix-matrix product.
 
-	// BUG If two matrices of same dimensions are multiplied, for one of them,
-	// the wrong operand will be selected, resulting in a matrix of the wrong
-	// size.
-
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
 
-	// Make sure operands are at the correct position
-	if(this->values[j].cols() == childDerivative.rows()) {
+	// Make sure operands are at the correct position for product x * y
+
+	// Incremening x
+	if(
+		xSize[1] == this->values[j].rows() &&
+		xSize[0] == this->values[j].cols()
+	) {
 		increment = (this->values[j].matrix() * childDerivative.matrix()).array();
 	}
-	else if(this->values[j].rows() == childDerivative.cols()) {
+
+	// Incrementing y
+	else if(
+		ySize[1] == this->values[j].rows() &&
+		ySize[0] == this->values[j].cols()
+	) {
 		increment = (childDerivative.matrix() * this->values[j].matrix() ).array();
+	}
+
+	else {
+		exit(-1);
 	}
 
 	return increment;

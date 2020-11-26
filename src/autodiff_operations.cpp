@@ -155,7 +155,8 @@ ts::Tensor<T> ts::matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y) {
 		new ts::MatProdNode<T>(
 			{x.value.rows(), y.value.cols()},
 			y.value.matrix().transpose(), x.index,
-			x.value.matrix().transpose(), y.index
+			x.value.matrix().transpose(), y.index,
+			{x.value.rows(), x.value.cols()}, {y.value.rows(), y.value.cols()}
 		)
 	);
 

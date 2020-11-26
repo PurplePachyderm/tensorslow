@@ -221,8 +221,6 @@ int main(void) {
 	unsigned nTests = 20;
 
 	// WARNING You must include the output layer (size 10)
-	// BUG Using two consecutive layers of same size causes a crash
-	// (because of matrix product differentiation, will soon be fixed)
 	std::vector<unsigned> layers = {256, 128, 10};
 
 

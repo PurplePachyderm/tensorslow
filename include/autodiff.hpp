@@ -62,7 +62,10 @@ namespace ts {
 
 template <typename T>
 class ts::Node {
-private:
+protected:
+
+	Node() {}
+
 	// Represents an input variable
 	Node(std::vector<long> shape);
 
@@ -150,10 +153,24 @@ class ts::MatProdNode : public ts::Node<T> {
 private:
 	using ts::Node<T>::Node;
 
+	MatProdNode(
+		std::vector<long> shape,
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> yVal, int yDep,
+		std::vector<long int> newXSize, std::vector<long int> newYSize
+	);
+
+	// Size of the operands to figure out how to increment their partial
+	// derivatives
+	std::vector<long int> xSize;
+	std::vector<long int> ySize;
+
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
 			unsigned &j
 	);
+
+	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 };
 
 
