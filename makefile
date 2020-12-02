@@ -2,9 +2,10 @@
 
 CC=g++
 
-CPPFLAGS=-Wall
+CPPFLAGS=-Wall -fopenmp
 OPT_FLAGS=-O3
 TEST_FLAGS=-g -lgtest -lpthread
+PERF_FLAGS=-lbenchmark
 
 SRC=src
 BIN=bin
@@ -44,7 +45,7 @@ $(TEST_FILES): $(BIN)/%_test: $(TEST)/%.cpp
 
 perf:  $(SO_PATH) $(PERF_FILES)
 $(PERF_FILES): $(BIN)/%_perf: $(PERF)/%.cpp
-	$(CC) $< $(CPPFLAGS) $(OPT_FLAGS) $(LINK_FLAGS) -o $@
+	$(CC) $< $(CPPFLAGS) $(OPT_FLAGS) $(PERF_FLAGS) $(LINK_FLAGS) -o $@
 
 
 examples:  $(SO_PATH) $(EX_FILES)

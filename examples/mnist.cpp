@@ -207,6 +207,7 @@ void asciiDigit(Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> digit) {
 
 int main(void) {
 
+	std::cout << Eigen::nbThreads( ) << std::endl;
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
 

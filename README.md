@@ -58,4 +58,8 @@ for both training and testing phases.
 
 - [Eigen](http://eigen.tuxfamily.org) : your compiler should have access
   to the `Eigen` directory
-- [googletest](https://github.com/google/googletest) : required to build the tests
+- [OpenMP](https://www.openmp.org/) : Used to take advantage of Eigen's
+  multi-threading
+- [GoogleTest](https://github.com/google/googletest) : required to build the tests
+- [Benchmark](https://github.com/google/benchmark) : Google's benchmark library,
+  required to build the benchmarks
