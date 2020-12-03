@@ -7,6 +7,7 @@
 #pragma once
 
 #include "autodiff.hpp"
+#include <string>
 
 namespace ts {
 	template <typename T> class Model;
@@ -37,6 +38,10 @@ public:
 
 	// General method for computing the model forward pass
 	virtual ts::Tensor<T> compute(ts::Tensor<T> input) = 0;
+
+	// TODO
+	// virtual int save(std::string filePath);
+	// virtual int load(std::string filePath);
 
 	friend ts::GradientAccumulator<T>;
 };
