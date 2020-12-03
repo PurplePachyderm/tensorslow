@@ -31,6 +31,9 @@ std::vector<std::string> ts::serializer::split(std::string str, char delimeter) 
 template <typename T>
 std::string ts::serializer::serializeTensor(ts::Tensor<T> &tensor) {
 
+	//Write rows and cols
+
+
 	// Save array to string
 	std::ostringstream stringStream;
 	stringStream << tensor.getValue();
@@ -38,7 +41,8 @@ std::string ts::serializer::serializeTensor(ts::Tensor<T> &tensor) {
 	std::string str =  stringStream.str();
 
 
-	// Because some extra spaces can be added, we remove consecutive spaces
+	// Because some extra spaces can be added by Eigen, we remove consecutive
+	// spaces/linebreaks
 	for(unsigned i=str.size()-2; i>0; i--) {
 		if(
 			(str[i] == ' ' || str[i] == '\n') &&
@@ -64,11 +68,11 @@ std::string ts::serializer::serializeTensor(ts::Tensor<T> &tensor) {
 
 
 
-// Reads an ifstream starting at a serialized tensor, and parses it to an
-// Eigen::Array
+// Reads an ifstream starting at a serialized tensor, and parses it to a
+// ts::Tensor
 template <typename T>
-Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::serializer::parseArray(
-	std::ifstream in
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::serializer::parseTensor(
+	std::ifstream in, ts::WengertList<T> * wList
 ) {
 
 	std::string line;
@@ -96,7 +100,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::serializer::parseArray(
 		}
 	}
 
-	return array;
+	return ts::Tensor<T>(array, wList);
 }
 
 
@@ -120,4 +124,27 @@ std::string serializeTensorsVector(
 	}
 
 	return str;
+}
+
+
+
+// Reads an ifstream starting at a serialized tensors vector, and parses it to
+// a std::vector<ts::Tensor>
+template <typename T>
+std::string parseTensorsVector(
+	std::ifstream in, ts::WengertList<T> * wList
+) {
+	std::vector<ts::Tensor<T>> vector = {};
+
+	std::string line;
+
+	// Get tensor size
+	std::getline(in, line);
+	unsigned size = std::stoi(line);
+
+	for(unsigned i=0; i<size; i++) {
+		vector.push_bask(parseVector(in, wList));
+	}
+
+	return vector;
 }
