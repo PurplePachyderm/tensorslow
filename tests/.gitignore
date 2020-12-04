@@ -1,0 +1,2 @@
+# Ignore serialization test files
+*.ts

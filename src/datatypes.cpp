@@ -9,9 +9,13 @@
 #include "./autodiff.cpp"
 #include "./autodiff_operations.cpp"
 
-#include "./model.cpp"
+#include "./serializer.cpp"
 
+#include "./model.cpp"
 #include "./optimizer.cpp"
+
+#include <string>
+#include <fstream>
 
 
 	// float
@@ -51,6 +55,17 @@ template class ts::GradientAccumulator<float>;
 template class ts::Optimizer<float>;
 template class ts::GradientDescentOptimizer<float>;
 
+template std::string ts::serializeTensor(ts::Tensor<float> &tensor);
+template ts::Tensor<float> ts::parseTensor(
+	std::ifstream &in, ts::WengertList<float> * wList
+);
+template std::string ts::serializeTensorsVector(
+	std::vector<ts::Tensor<float>> &tensorsVector
+);
+template std::vector<ts::Tensor<float>> ts::parseTensorsVector(
+	std::ifstream &in, ts::WengertList<float> * wList
+);
+
 
 
 	// double
@@ -88,3 +103,14 @@ template class ts::GaElement<double>;
 template class ts::GradientAccumulator<double>;
 template class ts::Optimizer<double>;
 template class ts::GradientDescentOptimizer<double>;
+
+template std::string ts::serializeTensor(ts::Tensor<double> &tensor);
+template ts::Tensor<double> ts::parseTensor(
+	std::ifstream &in, ts::WengertList<double> * wList
+);
+template std::string ts::serializeTensorsVector(
+	std::vector<ts::Tensor<double>> &tensorsVector
+);
+template std::vector<ts::Tensor<double>> ts::parseTensorsVector(
+	std::ifstream &in, ts::WengertList<double> * wList
+);
