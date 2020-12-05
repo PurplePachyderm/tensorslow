@@ -101,6 +101,38 @@ ts::Tensor<T> ts::Polynom<T>::compute(ts::Tensor<T> input) {
 
 
 template <typename T>
+void ts::Polynom<T>::save(std::string filePath) {
+	std::ofstream out(filePath);
+	out << ts::serializeTensorsVector(coefficients);
+	out.close();
+}
+
+
+
+template <typename T>
+void ts::Polynom<T>::load(std::string filePath) {
+	// Delete current tensors and reset wList
+	coefficients = {};
+	this->wList.reset();
+
+	// Load new tensors
+	std::ifstream in(filePath);
+	coefficients = ts::parseTensorsVector(in, &(this->wList));
+	in.close();
+
+	// Set number of wors and cols
+	if(coefficients.size() > 0) {
+		nRows = coefficients[0].getValue().rows();
+		nCols = coefficients[0].getValue().cols();
+	} else {
+		nRows = 0;
+		nCols = 0;
+	}
+}
+
+
+
+template <typename T>
 long ts::Polynom<T>::rows() {
 	return nRows;
 }
@@ -175,4 +207,34 @@ ts::Tensor<T> ts::MultiLayerPerceptron<T>::compute(ts::Tensor<T> input) {
 	}
 
 	return input;
+}
+
+
+
+template <typename T>
+void ts::MultiLayerPerceptron<T>::save(std::string filePath) {
+	std::ofstream out(filePath);
+
+	out << ts::serializeTensorsVector(weights);
+	out << ts::serializeTensorsVector(biases);
+
+	out.close();
+}
+
+
+
+template <typename T>
+void ts::MultiLayerPerceptron<T>::load(std::string filePath) {
+	// Delete current tensors and reset wList
+	weights = {};
+	biases = {};
+	this->wList.reset();
+
+	// Load new tensors
+	std::ifstream in(filePath);
+
+	weights = ts::parseTensorsVector(in, &(this->wList));
+	biases = ts::parseTensorsVector(in, &(this->wList));
+
+	in.close();
 }

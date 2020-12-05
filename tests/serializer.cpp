@@ -34,6 +34,7 @@ TEST(Utilities, Tensor) {
 	// Read and copy tensor to other file
 	std::ifstream in("tests/tensor.ts");
 	ts::Tensor<float> b = ts::parseTensor(in, &wList);
+	in.close();
 
 
 	// Compare values
@@ -77,8 +78,8 @@ TEST(Utilities, Vector) {
 
 	// Read and copy vector to other file
 	std::ifstream in("tests/vector.ts");
-
 	std::vector<ts::Tensor<float>> vecDist = ts::parseTensorsVector(in, &wList);
+	in.close();
 
 
 	// Compare values
@@ -92,6 +93,85 @@ TEST(Utilities, Vector) {
 				EXPECT_NEAR(vecSrc[i].getValue()(j, k), vecDist[i].getValue()(j, k), 0.000001);
 			}
 		}
+	}
+
+}
+
+
+
+TEST(Models, Polynom) {
+	// Try to save and load a ts::Polynom
+
+	ts::Polynom<float> srcModel(3, {3, 3});
+	srcModel.save("tests/polynom.ts");
+
+
+	ts::Polynom<float> dstModel(0, {0, 0});
+	dstModel.load("tests/polynom.ts");
+
+
+	// Compare values
+
+	ASSERT_EQ(srcModel.coefficients.size(), dstModel.coefficients.size());
+
+	for(unsigned i=0; i<srcModel.coefficients.size(); i++) {
+
+		ASSERT_EQ(srcModel.coefficients[i].getValue().rows(), dstModel.coefficients[i].getValue().rows());
+		ASSERT_EQ(srcModel.coefficients[i].getValue().cols(), dstModel.coefficients[i].getValue().cols());
+
+		for(unsigned j=0; j<srcModel.coefficients[i].getValue().rows(); j++) {
+			for(unsigned k=0; k<srcModel.coefficients[i].getValue().cols(); k++) {
+				EXPECT_NEAR(srcModel.coefficients[i].getValue()(j, k), dstModel.coefficients[i].getValue()(j, k), 0.000001);
+			}
+		}
+		
+	}
+
+}
+
+
+
+TEST(Models, MultiLayerPerceptron) {
+	// Try to save and load a ts::MultiLayerPerceptron
+
+	ts::MultiLayerPerceptron<float> srcModel(2, {3});
+	srcModel.save("tests/mlp.ts");
+
+	ts::MultiLayerPerceptron<float> dstModel(0, {0});
+	dstModel.load("tests/mlp.ts");
+
+
+	// Compare values
+
+	ASSERT_EQ(srcModel.weights.size(), dstModel.weights.size());
+
+	for(unsigned i=0; i<srcModel.weights.size(); i++) {
+
+		ASSERT_EQ(srcModel.weights[i].getValue().rows(), dstModel.weights[i].getValue().rows());
+		ASSERT_EQ(srcModel.weights[i].getValue().cols(), dstModel.weights[i].getValue().cols());
+
+		for(unsigned j=0; j<srcModel.weights[i].getValue().rows(); j++) {
+			for(unsigned k=0; k<srcModel.weights[i].getValue().cols(); k++) {
+				EXPECT_NEAR(srcModel.weights[i].getValue()(j, k), dstModel.weights[i].getValue()(j, k), 0.000001);
+			}
+		}
+
+	}
+
+
+	ASSERT_EQ(srcModel.biases.size(), dstModel.biases.size());
+
+	for(unsigned i=0; i<srcModel.biases.size(); i++) {
+
+		ASSERT_EQ(srcModel.biases[i].getValue().rows(), dstModel.biases[i].getValue().rows());
+		ASSERT_EQ(srcModel.biases[i].getValue().cols(), dstModel.biases[i].getValue().cols());
+
+		for(unsigned j=0; j<srcModel.biases[i].getValue().rows(); j++) {
+			for(unsigned k=0; k<srcModel.biases[i].getValue().cols(); k++) {
+				EXPECT_NEAR(srcModel.biases[i].getValue()(j, k), dstModel.biases[i].getValue()(j, k), 0.000001);
+			}
+		}
+
 	}
 
 }
