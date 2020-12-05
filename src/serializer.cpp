@@ -54,7 +54,7 @@ std::string ts::serializeTensor(ts::Tensor<T> &tensor) {
 
 	outStream << tensor.getValue().rows() << std::endl;
 	outStream << tensor.getValue().cols() << std::endl;
-	outStream << arrayString << std::endl;
+	outStream << arrayString;
 
 	return outStream.str();
 }
@@ -73,7 +73,6 @@ ts::Tensor<T> ts::parseTensor(
 	// Get rows
 	std::getline(in, line);
 	unsigned rows = std::stoi(line);
-	std::cout << rows << std::endl;
 
 	// Get cols
 	std::getline(in, line);
@@ -81,7 +80,6 @@ ts::Tensor<T> ts::parseTensor(
 
 	// Get elements vector
 	std::getline(in, line);
-	std::cout << line << std::endl;
 	std::vector<std::string> stringElements = ts::split(line, ',');
 
 
