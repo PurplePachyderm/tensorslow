@@ -7,6 +7,10 @@
 #pragma once
 
 #include "autodiff.hpp"
+#include "serializer.hpp"
+
+#include <string>
+#include <fstream>
 
 namespace ts {
 	template <typename T> class Model;
@@ -33,10 +37,14 @@ public:
 	void toggleOptimize(ts::Tensor<T> * tensor, bool enable);
 
 	// Helper function to optimize the whole model
-	void toggleGlobalOptimize(bool enable);
+	virtual void toggleGlobalOptimize(bool enable) = 0;
 
 	// General method for computing the model forward pass
 	virtual ts::Tensor<T> compute(ts::Tensor<T> input) = 0;
+
+	// Serializes / parses model into / from a file
+	virtual void save(std::string filePath) = 0;
+	virtual void load(std::string filePath) = 0;
 
 	friend ts::GradientAccumulator<T>;
 };
@@ -61,6 +69,9 @@ public:
 
 	ts::Tensor<T> compute(ts::Tensor<T> input);
 
+	void save(std::string filePath);
+	void load(std::string filePath);
+
 	long rows();
 	long cols();
 };
@@ -84,4 +95,7 @@ public:
 	void toggleGlobalOptimize(bool enable);
 
 	ts::Tensor<T> compute(ts::Tensor<T> input);
+
+	void save(std::string filePath);
+	void load(std::string filePath);
 };
