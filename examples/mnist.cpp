@@ -207,7 +207,6 @@ void asciiDigit(Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> digit) {
 
 int main(void) {
 
-	std::cout << Eigen::nbThreads( ) << std::endl;
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
 
@@ -217,9 +216,9 @@ int main(void) {
 	unsigned batchSize = 10;
 	unsigned nBatches = 1000;
 	unsigned nEpochs = 3;
-	float learningRate = 0.05f;
+	float learningRate = 0.085f;
 
-	unsigned nTests = 20;
+	unsigned nTests = 100;
 
 	// WARNING You must include the output layer (size 10)
 	std::vector<unsigned> layers = {256, 128, 10};
