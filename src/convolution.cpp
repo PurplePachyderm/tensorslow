@@ -103,16 +103,15 @@ ts::Tensor<T> ts::convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker
 	// Init dMat matrix (for matrix partial derivative)
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dMat;
 	dMat.resize(
-		2 * mat.value.rows() - ker.value.rows(),
-		2 * mat.value.cols() - ker.value.cols()
+		2 * res.rows() + ker.value.rows() - 2,
+		2 * res.cols() + ker.value.cols() - 2
 	);
 
 	dMat.block(
-		mat.value.rows() - ker.value.rows(),
-		mat.value.cols() - ker.value.cols(),
+		res.rows() - 1,
+		res.cols() - 1,
 		ker.value.rows(), ker.value.cols()
 	) = ker.value.rowwise().reverse().colwise().reverse();
-
 
 	std::shared_ptr<ts::Node<T>> nodePtr (
 		new ts::ConvolutionNode<T>(
