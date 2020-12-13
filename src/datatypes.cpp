@@ -76,6 +76,10 @@ template class ts::ConvolutionNode<float>;
 template ts::Tensor<float> ts::convolution(
 	const ts::Tensor<float> &mat, const ts::Tensor<float> &ker
 );
+template class ts::PoolingNode<float>;
+template ts::Tensor<float> ts::maxPooling(
+	const ts::Tensor<float> &x, std::vector<unsigned> pool
+);
 
 
 
@@ -133,4 +137,8 @@ template Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 template class ts::ConvolutionNode<double>;
 template ts::Tensor<double> ts::convolution(
 	const ts::Tensor<double> &mat, const ts::Tensor<double> &ker
+);
+template class ts::PoolingNode<double>;
+template ts::Tensor<double> ts::maxPooling(
+	const ts::Tensor<double> &x, std::vector<unsigned> pool
 );

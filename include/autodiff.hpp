@@ -51,12 +51,16 @@ namespace ts {
 	ts::Tensor<T> squaredNorm(const ts::Tensor<T> &x);
 
 
-	// Forward declaration of friends (not related to audodiff)
+	// Forward declaration of friends
+	// (grad accumulators and other autodiff operations)
 	template <typename T> class GaElement;
 	template <typename T> class GradientAccumulator;
 
 	template <typename T>
 	ts::Tensor<T> convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+
+	template <typename T>
+	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 }
 
 
@@ -113,6 +117,7 @@ public:
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 
 };
 
@@ -217,6 +222,7 @@ public:
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 };
 
 
@@ -269,6 +275,7 @@ public:
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 };
 
 

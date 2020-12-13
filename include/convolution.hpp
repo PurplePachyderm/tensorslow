@@ -24,22 +24,53 @@ namespace ts {
 	);
 
 	template <typename T> class ConvolutionNode;
-
 	template <typename T>
 	ts::Tensor<T> convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+
+
+	template <typename T> class PoolingNode;
+	template <typename T>
+	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 }
 
 
 
 	// ts::ConvolutionNode
 
-	template <typename T>
-	class ts::ConvolutionNode : public ts::Node<T> {
-	private:
-		using ts::Node<T>::Node;
+template <typename T>
+class ts::ConvolutionNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
 
-		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
-				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
-				unsigned &j
-		);
-	};
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+};
+
+
+
+	// ts::PoolingNode
+
+template <typename T>
+class ts::PoolingNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	PoolingNode(
+		std::vector<long> shape,
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
+		std::vector<unsigned> newPool
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+
+	std::vector<unsigned> pool = {};
+
+	friend ts::Tensor<T> ts::maxPooling<>(
+		const ts::Tensor<T> &x, std::vector<unsigned> pool
+	);
+};

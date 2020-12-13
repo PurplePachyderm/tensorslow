@@ -346,6 +346,11 @@ ts::Gradient<T>::Gradient(
 
 template <typename T>
 Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Gradient<T>::getValue(ts::Tensor<T> a) {
+	// Prevents segfault if tensor is out of bound for some reason
+	if((unsigned) a.index >= derivatives.size()) {
+		return Eigen::Array<T, 0, 0>();
+	}
+
 	return derivatives[a.index];
 }
 
