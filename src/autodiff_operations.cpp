@@ -1,5 +1,7 @@
 /*
-* Overloaded operators and functions for the ts::Tensor class
+* Overloaded operators and functions for the ts::Tensor class. This file only
+* contains basic operations. Other more advanced functions (convolution, etc...)
+* will be defined in another file.
 */
 
 #include "../include/autodiff.hpp"
@@ -133,7 +135,7 @@ ts::Tensor<T> ts::operator/(const ts::Tensor<T> &x, const ts::Tensor<T> &y){
 
 
 
-	// Other functions
+	// Matrix product
 
 template <typename T>
 ts::Tensor<T> ts::matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y) {
@@ -147,8 +149,8 @@ ts::Tensor<T> ts::matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y) {
 	x.wList->elementWiseOnly = false;
 
 	// a = x.y
-	// da / dx = y^T	(transposed)
-	// da / dy = x^T
+	// dx = y^T	(transposed)
+	// dy = x^T
 	// (will be used in matrix product when computing gradient)
 
 	std::shared_ptr<ts::Node<T>> nodePtr (
@@ -164,6 +166,8 @@ ts::Tensor<T> ts::matProd(const ts::Tensor<T> &x, const ts::Tensor<T> &y) {
 }
 
 
+
+	// Activation functions
 
 template <typename T>
 ts::Tensor<T> ts::sigmoid(const ts::Tensor<T> &x) {
@@ -183,6 +187,8 @@ ts::Tensor<T> ts::sigmoid(const ts::Tensor<T> &x) {
 }
 
 
+
+	// Norm functions
 
 template <typename T>
 ts::Tensor<T> ts::squaredNorm(const ts::Tensor<T> &x) {

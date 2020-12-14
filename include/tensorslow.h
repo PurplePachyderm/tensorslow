@@ -9,3 +9,4 @@
 #include "model.hpp"
 #include "optimizer.hpp"
 #include "serializer.hpp"
+#include "convolution.hpp"

@@ -51,9 +51,19 @@ namespace ts {
 	ts::Tensor<T> squaredNorm(const ts::Tensor<T> &x);
 
 
-	// Forward declaration of friends (not related to audodiff)
+	// Forward declaration of friends
+	// (grad accumulators and other autodiff operations)
 	template <typename T> class GaElement;
 	template <typename T> class GradientAccumulator;
+
+	template <typename T>
+	ts::Tensor<T> convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+
+	template <typename T>
+	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+
+	template <typename T>
+	ts::Tensor<T> flattening(const ts::Tensor<T> &x);
 }
 
 
@@ -89,7 +99,6 @@ protected:
 			unsigned &j
 	) = 0;
 
-protected:
 	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > values{};
 	// Shape of the corresponding tensor
 	long rows, cols;
@@ -108,6 +117,10 @@ public:
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
+
+	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 
 };
 
@@ -210,6 +223,10 @@ public:
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
+
+	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
 
 
@@ -260,6 +277,10 @@ public:
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
+
+	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
 
 

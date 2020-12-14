@@ -14,6 +14,8 @@
 #include "./model.cpp"
 #include "./optimizer.cpp"
 
+#include "./convolution.cpp"
+
 #include <string>
 #include <fstream>
 
@@ -66,6 +68,21 @@ template std::vector<ts::Tensor<float>> ts::parseTensorsVector(
 	std::ifstream &in, ts::WengertList<float> * wList
 );
 
+template Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
+	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &mat,
+	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &ker
+);
+template class ts::ConvolutionNode<float>;
+template ts::Tensor<float> ts::convolution(
+	const ts::Tensor<float> &mat, const ts::Tensor<float> &ker
+);
+template class ts::PoolingNode<float>;
+template ts::Tensor<float> ts::maxPooling(
+	const ts::Tensor<float> &x, std::vector<unsigned> pool
+);
+template class ts::FlatteningNode<float>;
+template ts::Tensor<float> ts::flattening<float>(const ts::Tensor<float> &x);
+
 
 
 	// double
@@ -114,3 +131,18 @@ template std::string ts::serializeTensorsVector(
 template std::vector<ts::Tensor<double>> ts::parseTensorsVector(
 	std::ifstream &in, ts::WengertList<double> * wList
 );
+
+template Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
+	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &mat,
+	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &ker
+);
+template class ts::ConvolutionNode<double>;
+template ts::Tensor<double> ts::convolution(
+	const ts::Tensor<double> &mat, const ts::Tensor<double> &ker
+);
+template class ts::PoolingNode<double>;
+template ts::Tensor<double> ts::maxPooling(
+	const ts::Tensor<double> &x, std::vector<unsigned> pool
+);
+template class ts::FlatteningNode<double>;
+template ts::Tensor<double> ts::flattening<double>(const ts::Tensor<double> &x);
