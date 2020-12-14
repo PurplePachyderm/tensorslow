@@ -4,7 +4,6 @@
 */
 
 #include "../include/convolution.hpp"
-#include <iostream>
 
 
 
@@ -264,6 +263,96 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 			{res.rows(), res.cols()},
 			dx, x.index,
 			pool
+		)
+	);
+
+	return ts::Tensor<T>(res, x.wList, nodePtr);
+}
+
+
+
+// Flattening
+
+template <typename T>
+ts::FlatteningNode<T>::FlatteningNode(
+	std::vector<long> shape,
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
+	std::vector<unsigned> newSize
+) {
+
+	// FlatteningNode specific constructor to store the size of original matrix
+	// (this allows us to easily rescale the flattened vector in grad
+	// computation)
+
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	this->values =  {xVal};	// [da/dx]
+	this->dependencies =  {xDep};
+
+	size = newSize;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::incrementGradient(
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+	unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
+	// for a matrix flattening.
+
+	// childDerivative is a flattened vector. We need to convert it back to a
+	// matrix with the dimensions of the original matrix.
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
+	mat.setZero(size[0], size[1]);
+
+	for(unsigned i=0; i<size[0]; i++) {
+		for(unsigned j=0; j<size[1]; j++) {
+			mat(i, j) = childDerivative(i * size[1] + j, 1);
+		}
+	}
+
+	return mat;
+}
+
+
+
+template <typename T>
+ts::Tensor<T> ts::flattening(const ts::Tensor<T> &x) {
+	// Flattening operation to convert matrix to vector
+	// A x matrix of size m*n becomes the following vector :
+	// x(1,1), ..., x(1, n), x(2,1), ..., x(m, n)
+	// (the resulting size is (m*n, 1)
+
+	// The gradient will have to be computed for a scalar
+	x.wList->elementWiseOnly = false;
+
+
+	// Set res vector
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
+	res.setZero(x.value.rows() * x.value.cols(), 1);
+
+	for(unsigned i=0; i<x.value.rows(); i++) {
+		for(unsigned j=0; j<x.value.cols(); j++) {
+			res(i * x.value.cols() + j, 0) = x.value(i, j);
+		}
+	}
+
+
+	// Set dx matrix
+	// It should be 1-filled since we're keeping all values of x in res, but
+	// storing the full matrix would not be memory-efficient
+	Eigen::Array<T, 0, 0> dx;
+
+	// Return
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::FlatteningNode<T>(
+			{res.rows(), res.cols()},
+			dx, x.index
 		)
 	);
 

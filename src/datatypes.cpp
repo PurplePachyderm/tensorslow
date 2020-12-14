@@ -80,6 +80,8 @@ template class ts::PoolingNode<float>;
 template ts::Tensor<float> ts::maxPooling(
 	const ts::Tensor<float> &x, std::vector<unsigned> pool
 );
+template class ts::FlatteningNode<float>;
+template ts::Tensor<float> ts::flattening<float>(const ts::Tensor<float> &x);
 
 
 
@@ -142,3 +144,5 @@ template class ts::PoolingNode<double>;
 template ts::Tensor<double> ts::maxPooling(
 	const ts::Tensor<double> &x, std::vector<unsigned> pool
 );
+template class ts::FlatteningNode<double>;
+template ts::Tensor<double> ts::flattening<double>(const ts::Tensor<double> &x);

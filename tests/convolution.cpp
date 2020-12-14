@@ -111,6 +111,36 @@ TEST(Convolution, MaxPooling) {
 }
 
 
+TEST(Convolution, Flattening) {
+	// We'll test the flattening of a matrix to a vector
+
+	// Init matrix
+	unsigned x = 12;
+	unsigned y= 5;
+
+	ts::WengertList<float> wList;
+
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> mat_;
+	mat_.setRandom(x, y);
+
+	ts::Tensor<float> mat = ts::Tensor<float>(mat_, &wList);
+
+
+	// Flatten and test values
+	ts::Tensor<float> res = ts::flattening(mat);
+
+	ASSERT_EQ(res.getValue().rows(), x * y);
+	ASSERT_EQ(res.getValue().cols(), 1);
+
+	for(unsigned i=0; i<x; i++) {
+		for(unsigned j=0; j<y; j++) {
+			EXPECT_EQ(res.getValue()(i * y + j, 0), mat_(i, j));
+		}
+	}
+
+}
+
+
 
 int main(int argc, char **argv) {
 	std::cout << "*** CONVOLUTION TEST SUITE ***" << std::endl;

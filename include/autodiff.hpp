@@ -61,6 +61,9 @@ namespace ts {
 
 	template <typename T>
 	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+
+	template <typename T>
+	ts::Tensor<T> flattening(const ts::Tensor<T> &x);
 }
 
 
@@ -96,7 +99,6 @@ protected:
 			unsigned &j
 	) = 0;
 
-protected:
 	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > values{};
 	// Shape of the corresponding tensor
 	long rows, cols;
@@ -118,6 +120,7 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 
 };
 
@@ -223,6 +226,7 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
 
 
@@ -276,6 +280,7 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
 
 
