@@ -1,7 +1,7 @@
 /*
 * Benchmark for Eigen parallelization  with different numbers of threads.
 * Results may vary depending on your hardware, especially if you use more
-µ threads than your number of physical cores.
+* threads than your number of physical cores.
 */
 
 #include <iostream>

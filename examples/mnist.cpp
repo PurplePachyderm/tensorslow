@@ -347,8 +347,11 @@ int main(void) {
 			}
 		}
 
-		std::cout << "Prediction (" << prediction << "):" << std::endl<<
-		result << std::endl;
+		std::cout << "Prediction (" << prediction << "):" << std::endl;
+
+		for(unsigned j=0; j<10; j++) {
+			std::cout << j << ": " << result(j) << std::endl;
+		}
 
 		if(prediction == label) {
 			std::cout << std::endl << "SUCCESS =)" << std::endl;
