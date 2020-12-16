@@ -227,6 +227,51 @@ TEST(AutodiffTest, ElementWise) {
 
 
 
+TEST(AutodiffTest, Relu) {
+	// Test of ReLU function
+
+	ts::WengertList<float> wList;
+
+	Eigen::Array<float, 3, 3> x_;
+	x_ <<
+	-1, 41, -42,
+	12,  0,   0,
+	 0, 42,   7;
+	ts::Tensor<float> x = ts::Tensor<float>(x_, &wList);
+
+	ts::Tensor<float> res = ts::relu(x);
+
+
+	// Expected result and derivative
+	Eigen::Array<float, 3, 3> expectedRes;
+	expectedRes <<
+	0, 0.976, 0,
+	0.286, 0, 0,
+	0, 1, 0.167;
+
+	Eigen::Array<float, 3, 3> expectedDx;
+	expectedDx <<
+	0, 1.0f/42.0f, 0,
+	1.0f/42.0f, 0, 0,
+	0, 1.0f/42.0f, 1.0f/42.0f;
+
+
+	// Get derivative
+	ts::Gradient<float> grad = res.grad();
+	Eigen::Array<float, 3, 3> dx = grad.getValue(x);
+
+
+	// Compare results
+	for(unsigned i=0; i<x_.rows(); i++) {
+		for(unsigned j=0; j<x_.cols(); j++) {
+			ASSERT_NEAR(res.getValue()(i, j), expectedRes(i,j), 0.001);
+			ASSERT_NEAR(dx(i, j), expectedDx(i,j), 0.001);
+		}
+	}
+}
+
+
+
 TEST(AutodiffTest, MatProd) {
 	// Tests a matrix-matrix product, as well as the gradient protection
 	// mechanism (when computing grad of a non scalar tensor)
