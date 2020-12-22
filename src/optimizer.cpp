@@ -246,14 +246,49 @@ template <typename T>
 void ts::AdamOptimizer<T>::initMomentEstimates(
 	std::vector< std::shared_ptr<ts::Node<T>> > nodes
 ) {
+	// Initialize shape of moment estimates
+	// (same size as reset wList, zero filled)
+
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
 	for(unsigned i = 0; i<nodes.size(); i++) {
+
 		tmp.setZero(nodes[i]->rows, nodes[i]->cols);
 		m.push_back(tmp);
 		v.push_back(tmp);
 
 		mHat.push_back(Eigen::Array<T, 0, 0>());
 		vHat.push_back(Eigen::Array<T, 0, 0>());
+	}
+}
+
+
+
+template <typename T>
+void ts::AdamOptimizer<T>::computeIncrement(
+	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> >& derivatives,
+	std::vector<ts::GaElement<T>>& elements
+) {
+	// gradAccumulator will only be used to convert the indices of optimizable
+	// tensors from the gradient / wList indices system (iGrad) to the
+	// gradAccumulator indices system (iAcc)
+
+	unsigned iGrad;
+	for(unsigned iAcc=0; iAcc<elements.size(); iAcc++) {
+
+		// Get index in the gradAccumulator system
+		iGrad = elements[iAcc].index;
+
+		// Compute biased moment estimates
+		m[iAcc] = beta1 * m[iAcc] + (1-beta1) * derivatives[iGrad];
+		v[iAcc] = beta2 * v[iAcc] + (1-beta2) * derivatives[iGrad] * derivatives[iGrad];
+
+		// Compute bias-corrected moment estimates
+		mHat[iAcc] = m[iAcc] / (1 - decayedBeta1);
+		vHat[iAcc] = v[iAcc] / (1 - decayedBeta2);
+
+		// Replace gradient with its corrected value
+		// (since gradient is used in the gradAccumulator increment method)
+		derivatives[iGrad] = mHat[iAcc] / (vHat[iAcc].sqrt() + epsilon);
 	}
 }
 
@@ -267,8 +302,12 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 		// Set up gradient accumulator (this also resets wList)
 	this->gradAccumulator = ts::GradientAccumulator<T>(model);
 
-		// Initialize parameters (same size as reset wList, zero filled)
+
+		//Init parameters
+
 	initMomentEstimates(model.wList.nodes);
+	decayedBeta1 = beta1;
+	decayedBeta2 = beta2;
 
 
 		// Start running and training the model
@@ -299,8 +338,12 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 				ts::Tensor<T> output = model.compute(input);
 				ts::Tensor<T> norm = (*this->normFunction)(output - expected);
 
-				// Get gradient and increment gradient accumulator
+				// Get & correct gradient, then increment gradient accumulator
 				ts::Gradient<T> gradient = norm.grad();
+				computeIncrement(
+					gradient.derivatives,
+					this->gradAccumulator.elements
+				);
 				this->gradAccumulator.increment(gradient);
 
 				model.wList.reset();
@@ -310,6 +353,10 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 
 			updateModel(model, batches[j].size());
 			this->gradAccumulator.reset();
+
+			// Decay betas
+			decayedBeta1 = decayedBeta1 * beta1;
+			decayedBeta2 = decayedBeta2 * beta2;
 		}
 	}
 

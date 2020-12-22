@@ -321,4 +321,5 @@ public:
 
 	friend class ts::Tensor<T>;
 	friend class ts::GradientAccumulator<T>;
+	friend class ts::AdamOptimizer<T>;
 };

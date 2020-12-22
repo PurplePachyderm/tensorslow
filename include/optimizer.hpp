@@ -140,6 +140,8 @@ private:
 	void updateModel(ts::Model<T> &model, unsigned batchSize);
 
 public:
+	using ts::Optimizer<T>::Optimizer;
+
 	GradientDescentOptimizer(T newLearningRate);
 
 	T learningRate = 0.1;
@@ -162,6 +164,11 @@ private:
 	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> m = {};
 	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> v = {};
 
+	// NOTE For now, all mHat and vHat are stored in a vector. It would be
+	// possible to only use one Eigen::Array, and to resize it every time
+	// instead of storing all values.
+	// -> This is a tradeoff between time and memory, it would be interesting
+	// to benchmark both methods in the future.
 	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> mHat = {};
 	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> vHat = {};
 
@@ -170,10 +177,17 @@ private:
 	);
 
 	void computeIncrement(
-		// TODO
+		std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> >& derivatives,
+		std::vector<ts::GaElement<T>>& elements
 	);
 
+	T decayedBeta1;
+	T decayedBeta2;
+
+
 public :
+	using ts::Optimizer<T>::Optimizer;
+
 	AdamOptimizer(
 		T newAlpha,
 		T newBeta1, T newBeta2,

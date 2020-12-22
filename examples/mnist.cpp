@@ -287,6 +287,10 @@ int main(void) {
 
 	ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
+	// Alternatively, you can use the Adam optimizer (you may want to change
+	// some parameters to optimize runtime and accuracy)
+	// ts::AdamOptimizer<float> optimizer;
+
 	std::cout << "Created optimizer..." << std::endl;
 
 	optimizer.epochs = nEpochs;
