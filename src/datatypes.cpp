@@ -57,6 +57,7 @@ template class ts::GaElement<float>;
 template class ts::GradientAccumulator<float>;
 template class ts::Optimizer<float>;
 template class ts::GradientDescentOptimizer<float>;
+template class ts::AdamOptimizer<float>;
 
 template std::string ts::serializeTensor(ts::Tensor<float> &tensor);
 template ts::Tensor<float> ts::parseTensor(
@@ -122,6 +123,7 @@ template class ts::GaElement<double>;
 template class ts::GradientAccumulator<double>;
 template class ts::Optimizer<double>;
 template class ts::GradientDescentOptimizer<double>;
+template class ts::AdamOptimizer<double>;
 
 template std::string ts::serializeTensor(ts::Tensor<double> &tensor);
 template ts::Tensor<double> ts::parseTensor(

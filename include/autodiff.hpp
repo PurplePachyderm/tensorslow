@@ -57,6 +57,7 @@ namespace ts {
 	// (grad accumulators and other autodiff operations)
 	template <typename T> class GaElement;
 	template <typename T> class GradientAccumulator;
+	template <typename T> class AdamOptimizer;
 
 	template <typename T>
 	ts::Tensor<T> convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
@@ -102,6 +103,7 @@ protected:
 	) = 0;
 
 	std::vector< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > values{};
+
 	// Shape of the corresponding tensor
 	long rows, cols;
 
@@ -110,6 +112,7 @@ public:
 	friend ts::Tensor<T>;
 	friend ts::WengertList<T>;
 	friend ts::GradientAccumulator<T>;
+	friend ts::AdamOptimizer<T>;	// Needed to initialize moment estimates
 
 	friend ts::Tensor<T> operator+<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
 	friend ts::Tensor<T> operator-<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);
@@ -221,6 +224,7 @@ public:
 
 	friend class ts::Tensor<T>;
 	friend class ts::GradientAccumulator<T>;
+	friend class ts::AdamOptimizer<T>;	// Needed to initialize moment estimates
 
 	// Other non-element wise operations (to change elementWiseOnly)
 	friend ts::Tensor<T> matProd<>(const ts::Tensor<T> &x, const ts::Tensor<T> &y);

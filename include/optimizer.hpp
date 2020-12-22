@@ -20,7 +20,7 @@ namespace ts {
 
 	template <typename T> class Optimizer;
 	template <typename T> class GradientDescentOptimizer;
-
+	template <typename T> class AdamOptimizer;
 };
 
 
@@ -61,7 +61,9 @@ private:
 public:
 
 	friend ts::GradientAccumulator<T>;
+	friend ts::Optimizer<T>;
 	friend ts::GradientDescentOptimizer<T>;
+	friend ts::AdamOptimizer<T>;
 };
 
 
@@ -93,6 +95,7 @@ public:
 
 	friend ts::Optimizer<T>;
 	friend ts::GradientDescentOptimizer<T>;
+	friend ts::AdamOptimizer<T>;
 };
 
 
@@ -140,6 +143,48 @@ public:
 	GradientDescentOptimizer(T newLearningRate);
 
 	T learningRate = 0.1;
+
+	std::vector<std::vector<std::vector< T >>> run(
+		ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches
+	);
+};
+
+
+
+	// ts::AdamOptimizer
+
+template <typename T>
+class ts::AdamOptimizer : public ts::Optimizer<T> {
+private:
+	void updateModel(ts::Model<T> &model, unsigned batchSize);
+
+	// Moment estimates, initialized at run time
+	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> m = {};
+	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> v = {};
+
+	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> mHat = {};
+	std::vector<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> vHat = {};
+
+	void initMomentEstimates(
+		std::vector< std::shared_ptr<ts::Node<T>> > nodes
+	);
+
+	void computeIncrement(
+		// TODO
+	);
+
+public :
+	AdamOptimizer(
+		T newAlpha,
+		T newBeta1, T newBeta2,
+		T newEpsilon
+	);
+
+	// Default values set according to original paper
+	T alpha = 0.001;
+	T beta1 = 0.9;
+	T beta2 = 0.999;
+	T epsilon = 0.00000001;
 
 	std::vector<std::vector<std::vector< T >>> run(
 		ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches

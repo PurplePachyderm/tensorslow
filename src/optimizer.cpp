@@ -209,3 +209,121 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 
 	return losses;
 }
+
+
+
+	// ts::AdamOptimizer
+
+template <typename T>
+ts::AdamOptimizer<T>::AdamOptimizer(
+	T newAlpha,
+	T newBeta1, T newBeta2,
+	T newEpsilon
+) {
+	alpha = newAlpha;
+	beta1 = newBeta1;
+	beta2 = newBeta2;
+	epsilon = newEpsilon;
+}
+
+
+
+template <typename T>
+void ts::AdamOptimizer<T>::updateModel(
+	ts::Model<T> &model, unsigned batchSize
+) {
+	for(unsigned i=0; i<this->gradAccumulator.elements.size(); i++) {
+		this->gradAccumulator.updateTensor(
+			model, i,
+			alpha * this->gradAccumulator.elements[i].gradSum / batchSize
+		);
+	}
+}
+
+
+
+template <typename T>
+void ts::AdamOptimizer<T>::initMomentEstimates(
+	std::vector< std::shared_ptr<ts::Node<T>> > nodes
+) {
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
+	for(unsigned i = 0; i<nodes.size(); i++) {
+		tmp.setZero(nodes[i]->rows, nodes[i]->cols);
+		m.push_back(tmp);
+		v.push_back(tmp);
+
+		mHat.push_back(Eigen::Array<T, 0, 0>());
+		vHat.push_back(Eigen::Array<T, 0, 0>());
+	}
+}
+
+
+
+template <typename T>
+std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
+	ts::Model<T> &model, std::vector<std::vector< ts::TrainingData<T> >> &batches
+) {
+
+		// Set up gradient accumulator (this also resets wList)
+	this->gradAccumulator = ts::GradientAccumulator<T>(model);
+
+		// Initialize parameters (same size as reset wList, zero filled)
+	initMomentEstimates(model.wList.nodes);
+
+
+		// Start running and training the model
+
+	std::vector<std::vector<std::vector< T >>> losses = {};
+
+	// Epochs
+	for(unsigned i=0; i<this->epochs; i++) {
+
+		losses.push_back( {} );
+
+		// Batches
+		for(unsigned j=0; j<batches.size(); j++) {
+
+			losses[i].push_back( {} );
+
+			// Data instance
+			for(unsigned k=0; k<batches[j].size(); k++) {
+
+				ts::Tensor<T> input = ts::Tensor<T>(
+					batches[j][k].input, &(model.wList)
+				);
+				ts::Tensor<T> expected = ts::Tensor<T>(
+					batches[j][k].expected, &(model.wList)
+				);
+
+				// Compute model and norm
+				ts::Tensor<T> output = model.compute(input);
+				ts::Tensor<T> norm = (*this->normFunction)(output - expected);
+
+				// Get gradient and increment gradient accumulator
+				ts::Gradient<T> gradient = norm.grad();
+				this->gradAccumulator.increment(gradient);
+
+				model.wList.reset();
+
+				losses[i][j].push_back(norm.getValue()(0, 0));
+			}
+
+			updateModel(model, batches[j].size());
+			this->gradAccumulator.reset();
+		}
+	}
+
+
+		// Clean
+
+	this->gradAccumulator.clear();
+	model.wList.reset();
+
+	m = {};
+	v = {};
+	mHat = {};
+	vHat = {};
+
+
+	return losses;
+}
