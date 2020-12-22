@@ -213,10 +213,12 @@ int main(void) {
 		// Define size of dataset, network, ...
 		// (everything you might want to change should be here)
 
-	unsigned batchSize = 10;
+	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
 	unsigned nEpochs = 3;
-	float learningRate = 0.085f;
+
+	// If you're using the SGD optimizer
+	// float learningRate = 0.085f;
 
 	unsigned nTests = 100;
 
@@ -260,6 +262,8 @@ int main(void) {
 
 		// Read and generate training / testing data
 
+	std::cout << "Preparing dataset..." << std::endl;
+
 	std::vector<std::vector<ts::TrainingData<float>>> trainingData =
 	readMnist(trainImageFile, trainLabelFile, nBatches, batchSize);
 
@@ -274,31 +278,32 @@ int main(void) {
 	testLabelFile.close();
 
 
-	std::cout << "Setup of datasets complete..." << std::endl;
-
-
 
 		// Create and optimize the MultiLayerPerceptron (training phase)
+
+	std::cout << "Creating model..." << std::endl;
 
 	ts::MultiLayerPerceptron<float> model(EXPECTED_IMAGE_SIZE, layers);
 	model.toggleGlobalOptimize(true);
 
-	std::cout << "Created model..." << std::endl;
 
-	ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
-	// Alternatively, you can use the Adam optimizer (you may want to change
-	// some parameters to optimize runtime and accuracy)
-	// ts::AdamOptimizer<float> optimizer;
+	// Adam optimizer is now the default one
+	ts::AdamOptimizer<float> optimizer;
 
-	std::cout << "Created optimizer..." << std::endl;
+	// You can use the SGD optimizer instead
+	// (it is recommended to adjust parameters. For instance, you can increase
+	// the number of batches)
+	// ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
 	optimizer.epochs = nEpochs;
+	
+	std::cout << "Training model..." << std::endl;
 	std::vector<std::vector<std::vector< float >>> losses =
 	optimizer.run(model, trainingData);
 
 
-	std::cout << "Ran optimizer..." << std::endl << std::endl;
+	std::cout << "Training phase complete !" << std::endl << std::endl;
 
 
 
