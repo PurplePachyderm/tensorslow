@@ -259,6 +259,7 @@ template <typename T>
 ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	std::vector<unsigned> inputSize,
 	std::vector<std::vector<unsigned>> convLayers,
+	std::vector<unsigned> poolingSize,
 	std::vector<unsigned> denseLayers
 ) {
 	// inputSize : std::vector of size 2 for dimensions of 2D image / matrix
@@ -274,6 +275,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	if(inputSize[0] == 0 || inputSize[1] == 0) {
 		return;
 	}
+
 
 	std::vector<int> intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
 
@@ -301,6 +303,15 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		if(denseLayers[i] == 0) {
 			return;
 		}
+	}
+
+
+		// Make sure pooling is possible
+	if(
+		poolingSize[0] % intermediarySize[0] != 0 ||
+		poolingSize[1] % intermediarySize[1] != 0
+	) {
+		return;
 	}
 
 
@@ -336,6 +347,10 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 			&(this->wList))
 		);
 	}
+
+	// Set up data fields
+	expectedInput = inputSize;
+	pooling = poolingSize;
 
 }
 
@@ -380,7 +395,7 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	// 1) Convolution computation loop
 	for(unsigned i=0; i<convKernels.size(); i++) {
 		input = (*activationFunction)(convolution(input, convKernels[i]));
-		input = maxPooling(input);
+		input = maxPooling(input, pooling);
 	}
 
 	// 2) Flatten convolution output
