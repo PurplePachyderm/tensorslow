@@ -245,15 +245,15 @@ TEST(AutodiffTest, Relu) {
 	// Expected result and derivative
 	Eigen::Array<float, 3, 3> expectedRes;
 	expectedRes <<
-	0, 0.976, 0,
-	0.286, 0, 0,
-	0, 1, 0.167;
+	0, 41, 0,
+	12, 0, 0,
+	0, 42, 7;
 
 	Eigen::Array<float, 3, 3> expectedDx;
 	expectedDx <<
-	0, 1.0f/42.0f, 0,
-	1.0f/42.0f, 0, 0,
-	0, 1.0f/42.0f, 1.0f/42.0f;
+	0, 1.0f, 0,
+	1.0f, 0, 0,
+	0, 1.0f, 1.0f;
 
 
 	// Get derivative

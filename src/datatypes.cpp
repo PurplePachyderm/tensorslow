@@ -51,6 +51,7 @@ template ts::Tensor<float> ts::squaredNorm(const ts::Tensor<float> &x);
 template class ts::Model<float>;
 template class ts::Polynom<float>;
 template class ts::MultiLayerPerceptron<float>;
+template class ts::ConvolutionalNetwork<float>;
 
 template class ts::TrainingData<float>;
 template class ts::GaElement<float>;
@@ -117,6 +118,7 @@ template ts::Tensor<double> ts::squaredNorm(const ts::Tensor<double> &x);
 template class ts::Model<double>;
 template class ts::Polynom<double>;
 template class ts::MultiLayerPerceptron<double>;
+template class ts::ConvolutionalNetwork<double>;
 
 template class ts::TrainingData<double>;
 template class ts::GaElement<double>;

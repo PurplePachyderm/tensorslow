@@ -17,6 +17,7 @@ namespace ts {
 
 	template <typename T> class Polynom;
 	template <typename T> class MultiLayerPerceptron;
+	template <typename T> class ConvolutionalNetwork;
 
 	// Friends forward declaration
 	template <typename T> class GradientAccumulator;
@@ -89,6 +90,37 @@ public:
 
 	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
+	std::vector<ts::Tensor<T>> weights = {};
+	std::vector<ts::Tensor<T>> biases = {};
+
+	void toggleGlobalOptimize(bool enable);
+
+	ts::Tensor<T> compute(ts::Tensor<T> input);
+
+	void save(std::string filePath);
+	void load(std::string filePath);
+};
+
+
+
+	// ts::ConvolutionalNetwork
+
+template <typename T>
+class ts::ConvolutionalNetwork : public ts::Model<T> {
+private:
+
+public:
+	ConvolutionalNetwork(
+		std::vector<unsigned> inputSize,
+		std::vector<std::vector<unsigned>> convLayers,
+		std::vector<unsigned> denseLayers
+	);
+
+	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
+
+
+	std::vector<unsigned> expectedInput;
+	std::vector<ts::Tensor<T>> convKernels = {};
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
 

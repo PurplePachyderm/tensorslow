@@ -297,7 +297,7 @@ int main(void) {
 	// ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
 	optimizer.epochs = nEpochs;
-	
+
 	std::cout << "Training model..." << std::endl;
 	std::vector<std::vector<std::vector< float >>> losses =
 	optimizer.run(model, trainingData);
