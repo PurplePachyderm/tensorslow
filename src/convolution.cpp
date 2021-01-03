@@ -101,7 +101,7 @@ ts::Tensor<T> ts::convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker
 
 	// Init dMat matrix (for matrix partial derivative)
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dMat;
-	dMat.resize(
+	dMat.setZero(
 		2 * res.rows() + ker.value.rows() - 2,
 		2 * res.cols() + ker.value.cols() - 2
 	);
@@ -167,8 +167,8 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::PoolingNode<T>::incrementGra
 	// Affect coefficients of childDerivative to upsample pools by filling each
 	// pool with the corresponding value
 
-	for(unsigned i=0; i<childDerivative.rows() / pool[0]; i++) {
-		for(unsigned j=0; j<childDerivative.cols() / pool[1]; j++) {
+	for(unsigned i=0; i<childDerivative.rows(); i++) {
+		for(unsigned j=0; j<childDerivative.cols(); j++) {
 
 			// Fill one pool with one value
 			for(unsigned k=0; k<pool[0]; k++) {
@@ -235,8 +235,8 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 			// (for now it seems the best way is to manually iterate over
 			// elements)
 
-			xMax = 0;
-			yMax = 0;
+			xMax = i * pool[0];
+			yMax = j * pool[1];
 			maxVal = x.value(i * pool[0], j * pool[1]);
 
 			for(unsigned k=0; k<pool[0]; k++) {
@@ -258,6 +258,7 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 		}
 	}
 
+
 	std::shared_ptr<ts::Node<T>> nodePtr (
 		new ts::PoolingNode<T>(
 			{res.rows(), res.cols()},
@@ -277,19 +278,21 @@ template <typename T>
 ts::FlatteningNode<T>::FlatteningNode(
 	std::vector<long> shape,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
-	std::vector<unsigned> newSize
+	std::vector<long> newSize
 ) {
 
 	// FlatteningNode specific constructor to store the size of original matrix
 	// (this allows us to easily rescale the flattened vector in grad
 	// computation)
 
+	// New tensor shape (vector)
 	this->rows = shape[0];
 	this->cols = shape[1];
 
 	this->values =  {xVal};	// [da/dx]
 	this->dependencies =  {xDep};
 
+	// Original matrix size
 	size = newSize;
 }
 
@@ -312,7 +315,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::increment
 
 	for(unsigned i=0; i<size[0]; i++) {
 		for(unsigned j=0; j<size[1]; j++) {
-			mat(i, j) = childDerivative(i * size[1] + j, 1);
+			mat(i, j) = childDerivative(i * size[1] + j, 0);
 		}
 	}
 
@@ -352,7 +355,8 @@ ts::Tensor<T> ts::flattening(const ts::Tensor<T> &x) {
 	std::shared_ptr<ts::Node<T>> nodePtr (
 		new ts::FlatteningNode<T>(
 			{res.rows(), res.cols()},
-			dx, x.index
+			dx, x.index,
+			{x.value.rows(), x.value.cols()}
 		)
 	);
 

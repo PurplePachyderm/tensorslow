@@ -259,7 +259,7 @@ template <typename T>
 ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	std::vector<unsigned> inputSize,
 	std::vector<std::vector<unsigned>> convLayers,
-	std::vector<unsigned> poolingSize,
+	std::vector<std::vector<unsigned>> poolingLayers,
 	std::vector<unsigned> denseLayers
 ) {
 	// inputSize : std::vector of size 2 for dimensions of 2D image / matrix
@@ -270,22 +270,47 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		// Validate dimensions of network
 
 	if(inputSize.size() != 2) {
+		std::cout << "ERROR: Input is not of size 2" << std::endl;
 		return;
 	}
 	if(inputSize[0] == 0 || inputSize[1] == 0) {
+		std::cout << "ERROR: Input is of dimension 0" << std::endl;
 		return;
 	}
 
+	// Do we have an equal number of convolution and pooling layers ?
+	if(convLayers.size() != poolingLayers.size()) {
+		std::cout << "ERROR: Different numbers for convolution and pooling layers"
+		<< std::endl;
+		return;
+	}
 
 	std::vector<int> intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
 
-	// Make sure convolutions are possible
+
+	// Make sure convolutions / poolings are possible
 	for(unsigned i=0; i<convLayers.size(); i++) {
 		// Is size of kernel correctly described
 		if(convLayers[i].size() != 2) {
+			std::cout << "ERROR: Convolution layer " << i <<
+			" is not of size 2" << std::endl;
 			return;
 		}
 		if(convLayers[i][0] == 0 || convLayers[i][0] == 0) {
+			std::cout << "ERROR: Convolution layer " << i <<
+			" is of dimension 0" << std::endl;
+			return;
+		}
+
+		// Is size of pooling correctly described
+		if(poolingLayers[i].size() != 2) {
+			std::cout << "ERROR: Pooling layer " << i <<
+			" is not of size 2" << std::endl;
+			return;
+		}
+		if(poolingLayers[i][0] == 0 || poolingLayers[i][0] == 0) {
+			std::cout << "ERROR: Pooling layer " << i <<
+			" is of dimension 0" << std::endl;
 			return;
 		}
 
@@ -293,26 +318,35 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		intermediarySize[0] = intermediarySize[0] - convLayers[i][0] + 1;
 		intermediarySize[1] = intermediarySize[1] - convLayers[i][1] + 1;
 
+
 		if(intermediarySize[0] <= 0 || intermediarySize[1] <= 0) {
+			std::cout << "ERROR: Convolution layer " << i <<
+			" is impossible" << std::endl;
+			return;
+		}
+
+		// Compute size of matrix after pooling
+		if(
+			intermediarySize[0] % poolingLayers[i][0] != 0 ||
+			intermediarySize[1] % poolingLayers[i][1] != 0
+		) {
+			std::cout << "ERROR: Pooling layer " << i <<
+			" is impossible" << std::endl;
+			return;
+		}
+
+		intermediarySize[0] = intermediarySize[0] / poolingLayers[i][0];
+		intermediarySize[1] = intermediarySize[1] / poolingLayers[i][1];
+
+	}
+
+	if(convLayers.size() > 0) {
+		if(denseLayers[0] != (unsigned) intermediarySize[0] * intermediarySize[1]) {
+			std::cout << "ERROR: Dense layer size is incompatible" << std::endl;
 			return;
 		}
 	}
 
-	// Make sure layers are not of size 0
-	for(unsigned i=0; i<denseLayers.size(); i++) {
-		if(denseLayers[i] == 0) {
-			return;
-		}
-	}
-
-
-		// Make sure pooling is possible
-	if(
-		poolingSize[0] % intermediarySize[0] != 0 ||
-		poolingSize[1] % intermediarySize[1] != 0
-	) {
-		return;
-	}
 
 
 		// Randomly init kernels, weights and biases
@@ -350,8 +384,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 
 	// Set up data fields
 	expectedInput = inputSize;
-	pooling = poolingSize;
-
+	pooling = poolingLayers;
 }
 
 
@@ -392,10 +425,10 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 		);
 	}
 
-	// 1) Convolution computation loop
+	// 1) Convolution / pooling computation loop
 	for(unsigned i=0; i<convKernels.size(); i++) {
 		input = (*activationFunction)(convolution(input, convKernels[i]));
-		input = maxPooling(input, pooling);
+		input = maxPooling(input, pooling[i]);
 	}
 
 	// 2) Flatten convolution output

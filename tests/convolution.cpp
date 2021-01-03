@@ -53,7 +53,7 @@ TEST(Convolution, Convolution) {
 	ts::Tensor<float> res = ts::convolution(mat, ker);
 
 
-	// Grad shoul be empty because res is not a scalar
+	// Grad should be empty because res is not a scalar
 	ts::Gradient<float> grad = res.grad();
 	EXPECT_EQ(grad.isEmpty(), true);
 
@@ -65,6 +65,11 @@ TEST(Convolution, Convolution) {
 			EXPECT_EQ(res_(i, j), res.getValue()(i,j));
 		}
 	}
+
+	// Get correct gradient
+	res = ts::squaredNorm(res);
+	grad = res.grad();
+	EXPECT_EQ(grad.isEmpty(), false);
 }
 
 
@@ -108,6 +113,27 @@ TEST(Convolution, MaxPooling) {
 		}
 	}
 
+	// Get gradient
+
+	Eigen::Array<float, 6, 9> expectedGrad;
+	expectedGrad <<
+	0, 84.0f, 0, 84.0f, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 84.0f, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 84.0f, 0, 0, 0, 0, 0, 84.0f, 0,
+	0, 0, 0, 0, 0, 84.0f, 0, 0, 0;
+
+	res = ts::squaredNorm(res);
+	ts::Gradient<float> grad = res.grad();
+	EXPECT_EQ(grad.isEmpty(), false);
+
+	for(unsigned i=0; i<2; i++) {
+		for(unsigned j=0; j<3; j++) {
+			EXPECT_EQ(grad.getValue(x)(i, j), expectedGrad(i, j));
+		}
+	}
+
 }
 
 
@@ -137,6 +163,11 @@ TEST(Convolution, Flattening) {
 			EXPECT_EQ(res.getValue()(i * y + j, 0), mat_(i, j));
 		}
 	}
+
+	// Get gradient
+	res = ts::squaredNorm(res);
+	ts::Gradient<float> grad = res.grad();
+	EXPECT_EQ(grad.isEmpty(), false);
 
 }
 

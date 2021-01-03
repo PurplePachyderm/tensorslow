@@ -11,6 +11,7 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
 
 namespace ts {
 	template <typename T> class Model;
@@ -113,7 +114,7 @@ public:
 	ConvolutionalNetwork(
 		std::vector<unsigned> inputSize,
 		std::vector<std::vector<unsigned>> convLayers,
-		std::vector<unsigned> poolingSize,
+		std::vector<std::vector<unsigned>> poolingLayers,
 		std::vector<unsigned> denseLayers
 	);
 
@@ -122,7 +123,7 @@ public:
 
 	std::vector<unsigned> expectedInput;
 	std::vector<ts::Tensor<T>> convKernels = {};
-	std::vector<unsigned> pooling;
+	std::vector<std::vector<unsigned>> pooling;
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
 

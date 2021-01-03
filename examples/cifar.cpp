@@ -105,17 +105,172 @@ int main(void) {
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
+	unsigned nEpochs = 3;
+
+	unsigned nTests = 100;
 
 
-	// Open data files
+		// Open data files
+
 	std::ifstream batch1(
 		"examples/cifar/data_batch_1.bin", std::ios::binary
 	);
 
+	std::ifstream batch2(
+		"examples/cifar/data_batch_2.bin", std::ios::binary
+	);
+
+	std::ifstream batch3(
+		"examples/cifar/data_batch_3.bin", std::ios::binary
+	);
+
+	std::ifstream batch4(
+		"examples/cifar/data_batch_4.bin", std::ios::binary
+	);
+
+	std::ifstream batch5(
+		"examples/cifar/data_batch_5.bin", std::ios::binary
+	);
+
+	std::ifstream batch6(
+		"examples/cifar/data_batch_6.bin", std::ios::binary
+	);
+
+
+		// You can change batches for training / prediction phases
+
 	std::vector<std::vector<ts::TrainingData<float>>> trainingData =
 	readCifar(batch1, nBatches, batchSize);
 
+	std::vector<ts::TrainingData<float>> testingData =
+	readCifar(batch2, 1, nTests)[0];
+
+
+		// Create and optimize the MultiLayerPerceptron (training phase)
+
+	std::cout << "Creating model..." << std::endl;
+
+	ts::ConvolutionalNetwork<float> model(
+		// Input
+		{IMAGE_HEIGHT, IMAGE_WIDTH},
+
+		// Convolution / pooling
+		{{3,3}, {4,4}, {3,3}},
+		{{2,2}, {2,2}, {1,1}},
+
+		// Dense layers (with output vector)
+		{80, 10}
+	);
+
+	model.toggleGlobalOptimize(true);
+
+
+	// Adam optimizer is now the default one
+	ts::AdamOptimizer<float> optimizer;
+
+	// You can use the SGD optimizer instead
+	// (it is recommended to adjust parameters. For instance, you can increase
+	// the number of batches)
+	// ts::GradientDescentOptimizer<float> optimizer(learningRate);
+
+	optimizer.epochs = nEpochs;
+
+	std::cout << "Training model..." << std::endl;
+	std::vector<std::vector<std::vector< float >>> losses =
+	optimizer.run(model, trainingData);
+
+
+	std::cout << "Training phase complete !" << std::endl << std::endl;
+
+	// TESTING
+	ts::Tensor<float> input = ts::Tensor<float>(trainingData[0][0].input, &model.wList);
+	ts::Tensor<float> output = model.compute(input);
+	std::cout << "ACTUAL" << std::endl;
+	std::cout << output.getValue() << std::endl;
+	std::cout << "EXPECTED" << std::endl;
+	std::cout << trainingData[0][0].expected << std::endl;
+
+
+	// Run tests (prediction phase)
+
+	unsigned nSuccesses = 0;
+	unsigned nErrors = 0;
+
+	for(unsigned i=0; i<nTests; i++) {
+		ts::Tensor<float> input = ts::Tensor<float>(
+			testingData[i].input, &(model.wList)
+		);
+
+		ts::Tensor<float> result_ = model.compute(input);
+
+		Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> result =
+		result_.getValue();
+
+		model.wList.reset();
+
+
+		// Display result
+
+		std::cout << "*******************************************" << std::endl;
+
+		std::cout << "Test " << i << ":" << std::endl;
+
+		// TODO Display ASCII ? Possile to get a good result ?
+		// asciiDigit(testingData[i].input);
+
+		// Display label (expected output)
+		unsigned label = 0;
+		for(unsigned j=0; j<10; j++) {
+			if(testingData[i].expected(j, 0) == 1.0f) {
+				std::cout << "Label :" << j << std::endl;
+				label = j;
+			}
+		}
+
+
+		// Display prediction
+
+		// Get prediction (maximum of the result vector)
+		unsigned prediction = 0;
+		float maxProbability = result(0,0);
+		for(unsigned j=1; j<10; j++) {
+			if(result(j, 0) > maxProbability) {
+				prediction = j;
+				maxProbability = result(j, 0);
+			}
+		}
+
+		std::cout << "Prediction (" << prediction << "):" << std::endl;
+
+		for(unsigned j=0; j<10; j++) {
+			std::cout << j << ": " << result(j) << std::endl;
+		}
+
+		if(prediction == label) {
+			std::cout << std::endl << "SUCCESS =)" << std::endl;
+			nSuccesses++;
+		}
+		else {
+			std::cout << std::endl << "ERROR =/" << std::endl;
+			nErrors++;
+		}
+
+		std::cout << "*******************************************" << std::endl
+		<< std::endl;
+	}
+
+	std::cout << "Number of successes: " << nSuccesses << std::endl;
+	std::cout << "Number of failures: " << nErrors << std::endl;
+
+	std::cout << "Accuracy: " << 100 * (float) nSuccesses / (float) nTests << "%" << std::endl;
+
+
 	batch1.close();
+	batch2.close();
+	batch3.close();
+	batch4.close();
+	batch5.close();
+	batch6.close();
 
 	return 0;
 }

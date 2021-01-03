@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 
 #include <Eigen/Dense>
 
@@ -90,7 +91,7 @@ private:
 	FlatteningNode(
 		std::vector<long> shape,
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
-		std::vector<unsigned> newSize
+		std::vector<long> newSize
 	);
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
@@ -98,7 +99,7 @@ private:
 			unsigned &j
 	);
 
-	std::vector<unsigned> size = {};
+	std::vector<long> size = {};
 
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
