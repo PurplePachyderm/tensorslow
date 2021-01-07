@@ -32,6 +32,10 @@ namespace ts {
 	template <typename T>
 	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 
+	template <typename T> class VertCatNode;
+	template <typename T>
+	ts::Tensor<T> vertCat(const std::vector<ts::Tensor<T>> &x);
+
 	template <typename T> class FlatteningNode;
 	template <typename T>
 	ts::Tensor<T> flattening(const ts::Tensor<T> &x);
@@ -81,6 +85,32 @@ private:
 
 
 
+	// ts::VertCatNode
+
+template <typename T>
+class ts::VertCatNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	// This node can have n parents !
+	VertCatNode(
+		std::vector<long> shape,
+		std::vector<int> newDependencies,
+		std::vector<long> newHeights
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+
+	std::vector<long> heights = {};
+
+	friend ts::Tensor<T> ts::vertCat<>(const std::vector<ts::Tensor<T>> &x);
+};
+
+
+
 	// ts::FlatteningNode
 
 template <typename T>
@@ -101,5 +131,5 @@ private:
 
 	std::vector<long> size = {};
 
-	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> ts::flattening<>(const ts::Tensor<T> &x);
 };

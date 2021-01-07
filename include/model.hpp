@@ -122,7 +122,10 @@ public:
 
 
 	std::vector<unsigned> expectedInput;
-	std::vector<ts::Tensor<T>> convKernels = {};
+
+	// 1st dim : layers / 2nd dim : output channels / 3rd dim : input channels
+	std::vector<std::vector<std::vector<ts::Tensor<T>>>> convKernels = {};
+
 	std::vector<std::vector<unsigned>> pooling;
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};

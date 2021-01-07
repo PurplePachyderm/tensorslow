@@ -66,6 +66,9 @@ namespace ts {
 	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
 
 	template <typename T>
+	ts::Tensor<T> vertCat(const std::vector<ts::Tensor<T>> &x);
+
+	template <typename T>
 	ts::Tensor<T> flattening(const ts::Tensor<T> &x);
 }
 
@@ -126,6 +129,7 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 
 };
@@ -234,6 +238,7 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
 
@@ -289,6 +294,7 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
 

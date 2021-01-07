@@ -133,8 +133,57 @@ TEST(Convolution, MaxPooling) {
 			EXPECT_EQ(grad.getValue(x)(i, j), expectedGrad(i, j));
 		}
 	}
-
 }
+
+
+
+TEST(Convolution, VerticalConcatenation) {
+	// We'll create a simple 6*9 matrix, and try a max pooling with a 3*3
+	// pool size.
+
+	ts::WengertList<float> wList;
+
+	Eigen::Array<float, 3, 3> x_;
+	x_ <<
+	1, 2, 3,
+	4, 5, 6,
+	7, 8, 9;
+	ts::Tensor<float> x = ts::Tensor<float>(x_, &wList);
+
+	Eigen::Array<float, 4, 3> y_;
+	y_ <<
+	1, 2, 3,
+	4, 5, 6,
+	7, 8, 9,
+	10, 11, 12;
+	ts::Tensor<float> y = ts::Tensor<float>(y_, &wList);
+
+	std::vector<ts::Tensor<float>> vec = {x, y};
+
+	ts::Tensor<float> res = ts::vertCat(vec);
+
+
+	// Check size / values of res
+	ASSERT_EQ(res.getValue().rows(), 7);
+	ASSERT_EQ(res.getValue().cols(), 3);
+
+	Eigen::Array<float, 7, 3> expected;
+	expected <<
+	1, 2, 3,
+	4, 5, 6,
+	7, 8, 9,
+	1, 2, 3,
+	4, 5, 6,
+	7, 8, 9,
+	10, 11, 12;
+
+	for(unsigned i=0; i<7; i++) {
+		for(unsigned j=0; j<3; j++) {
+			EXPECT_EQ(res.getValue()(i, j), expected(i, j));
+		}
+	}
+}
+
 
 
 TEST(Convolution, Flattening) {

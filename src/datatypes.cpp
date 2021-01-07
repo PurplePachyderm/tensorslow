@@ -83,6 +83,10 @@ template class ts::PoolingNode<float>;
 template ts::Tensor<float> ts::maxPooling(
 	const ts::Tensor<float> &x, std::vector<unsigned> pool
 );
+template class ts::VertCatNode<float>;
+template ts::Tensor<float> ts::vertCat<float>(
+	const std::vector<ts::Tensor<float>> &x
+);
 template class ts::FlatteningNode<float>;
 template ts::Tensor<float> ts::flattening<float>(const ts::Tensor<float> &x);
 
@@ -149,6 +153,10 @@ template ts::Tensor<double> ts::convolution(
 template class ts::PoolingNode<double>;
 template ts::Tensor<double> ts::maxPooling(
 	const ts::Tensor<double> &x, std::vector<unsigned> pool
+);
+template class ts::VertCatNode<double>;
+template ts::Tensor<double> ts::vertCat<double>(
+	const std::vector<ts::Tensor<double>> &x
 );
 template class ts::FlatteningNode<double>;
 template ts::Tensor<double> ts::flattening<double>(const ts::Tensor<double> &x);

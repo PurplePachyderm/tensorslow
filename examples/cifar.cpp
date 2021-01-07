@@ -104,7 +104,7 @@ int main(void) {
 
 
 	unsigned batchSize = 5;
-	unsigned nBatches = 1000;
+	unsigned nBatches = 100;
 	unsigned nEpochs = 3;
 
 	unsigned nTests = 100;
@@ -155,11 +155,11 @@ int main(void) {
 		{IMAGE_HEIGHT, IMAGE_WIDTH},
 
 		// Convolution / pooling
-		{{3,3}, {4,4}, {3,3}},
-		{{2,2}, {2,2}, {1,1}},
+		{{9, 3, 32}, {17, 4, 64}, {9, 3, 64}},
+		{{2,2}, {2,2}, {0, 0}},
 
-		// Dense layers (with output vector)
-		{80, 10}
+		// Dense layers (with output vector & not including first layer)
+		{64, 10}
 	);
 
 	model.toggleGlobalOptimize(true);
@@ -167,11 +167,6 @@ int main(void) {
 
 	// Adam optimizer is now the default one
 	ts::AdamOptimizer<float> optimizer;
-
-	// You can use the SGD optimizer instead
-	// (it is recommended to adjust parameters. For instance, you can increase
-	// the number of batches)
-	// ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
 	optimizer.epochs = nEpochs;
 

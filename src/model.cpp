@@ -262,7 +262,8 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	std::vector<std::vector<unsigned>> poolingLayers,
 	std::vector<unsigned> denseLayers
 ) {
-	// inputSize : std::vector of size 2 for dimensions of 2D image / matrix
+	// inputSize : std::vector of size 3 for dimensions of 2D image / matrix
+	//	+ number of channels (number of conv kernels for each layer)
 	// convLayers : sizes of convolution kernels (std::vector of dimension 2)
 	// fullLayers: sizes of fully connected layers
 
@@ -270,11 +271,11 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		// Validate dimensions of network
 
 	if(inputSize.size() != 2) {
-		std::cout << "ERROR: Input is not of size 2" << std::endl;
+		std::cout << "ERROR: Input is not of dimension 2" << std::endl;
 		return;
 	}
 	if(inputSize[0] == 0 || inputSize[1] == 0) {
-		std::cout << "ERROR: Input is of dimension 0" << std::endl;
+		std::cout << "ERROR: Input is of size 0" << std::endl;
 		return;
 	}
 
@@ -285,34 +286,36 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		return;
 	}
 
-	std::vector<int> intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
 
+	std::vector<int> intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
 
 	// Make sure convolutions / poolings are possible
 	for(unsigned i=0; i<convLayers.size(); i++) {
 		// Is size of kernel correctly described
-		if(convLayers[i].size() != 2) {
+		if(convLayers[i].size() != 3) {
 			std::cout << "ERROR: Convolution layer " << i <<
-			" is not of size 2" << std::endl;
+			" is not of dimension 3" << std::endl;
 			return;
 		}
-		if(convLayers[i][0] == 0 || convLayers[i][0] == 0) {
-			std::cout << "ERROR: Convolution layer " << i <<
-			" is of dimension 0" << std::endl;
-			return;
+		// Are the different numbers of channels > 0 ?
+		// (the numbers must be in growing order, and multipliers between each others)
+		if(i != 0) {
+			if(
+				convLayers[i][2] == 0
+			) {
+				std::cout << "ERROR: Number of channels for " << i <<
+				" is 0" << std::endl;
+				return;
+			}
 		}
 
 		// Is size of pooling correctly described
 		if(poolingLayers[i].size() != 2) {
 			std::cout << "ERROR: Pooling layer " << i <<
-			" is not of size 2" << std::endl;
+			" is not of dimension 2" << std::endl;
 			return;
 		}
-		if(poolingLayers[i][0] == 0 || poolingLayers[i][0] == 0) {
-			std::cout << "ERROR: Pooling layer " << i <<
-			" is of dimension 0" << std::endl;
-			return;
-		}
+
 
 		// Compute size of matrix after convolution
 		intermediarySize[0] = intermediarySize[0] - convLayers[i][0] + 1;
@@ -326,44 +329,61 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		}
 
 		// Compute size of matrix after pooling
-		if(
-			intermediarySize[0] % poolingLayers[i][0] != 0 ||
-			intermediarySize[1] % poolingLayers[i][1] != 0
-		) {
-			std::cout << "ERROR: Pooling layer " << i <<
-			" is impossible" << std::endl;
-			return;
+		if(poolingLayers[i][0] != 0 && poolingLayers[i][1] != 0) {
+			if(
+				intermediarySize[0] % poolingLayers[i][0] != 0 ||
+				intermediarySize[1] % poolingLayers[i][1] != 0
+			) {
+				std::cout << "ERROR: Pooling layer " << i <<
+				" is impossible" << std::endl;
+				return;
+			}
+
+			intermediarySize[0] = intermediarySize[0] / poolingLayers[i][0];
+			intermediarySize[1] = intermediarySize[1] / poolingLayers[i][1];
 		}
 
-		intermediarySize[0] = intermediarySize[0] / poolingLayers[i][0];
-		intermediarySize[1] = intermediarySize[1] / poolingLayers[i][1];
-
 	}
-
-	if(convLayers.size() > 0) {
-		if(denseLayers[0] != (unsigned) intermediarySize[0] * intermediarySize[1]) {
-			std::cout << "ERROR: Dense layer size is incompatible" << std::endl;
-			return;
-		}
-	}
-
 
 
 		// Randomly init kernels, weights and biases
 
 	// Convolution layers
-	for(unsigned i=0; i<convLayers.size(); i++) {
-		convKernels.push_back(ts::Tensor<T>(
-			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-			.setRandom(convLayers[i][0], convLayers[i][1]),
-			&(this->wList))
-		);
+
+	// This is the input of the network, of dimension 1
+	convLayers.insert(convLayers.begin(), {0, 0, 1});
+
+	convKernels = {};
+
+	// For each layer ...
+	for(unsigned i=1; i<convLayers.size(); i++) {
+
+		convKernels.push_back({});
+
+		// For each output ...
+		for(unsigned j=0; j<convLayers[i][2]; j++) {
+
+			convKernels[i-1].push_back({});
+
+			// For each input ...
+			for(unsigned k=0; k<convLayers[i-1][2]; k++) {
+
+				// ... add a conv kernel
+				convKernels[i-1][j].push_back(ts::Tensor<T>(
+					Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
+					.setRandom(convLayers[i][0], convLayers[i][1]),
+					&(this->wList))
+				);
+
+			}
+		}
 	}
 
 	// Fully connected layers
 	denseLayers.insert(
-		// First dense layer input will be flattened convolution output
-		denseLayers.begin(), intermediarySize[0] * intermediarySize[1]
+		// First dense layer input will be the flattened convolution output
+		denseLayers.begin(),
+		intermediarySize[0] * intermediarySize[1] * convLayers[convLayers.size() - 1][2]
 	);
 
 	for(unsigned i=1; i<denseLayers.size(); i++) {
@@ -396,7 +416,11 @@ void ts::ConvolutionalNetwork<T>::toggleGlobalOptimize(bool enable) {
 	}
 
 	for(unsigned i=0; i<convKernels.size(); i++) {
-		this->toggleOptimize(&(convKernels[i]), enable);
+		for(unsigned j=0; j<convKernels[i].size(); j++) {
+			for(unsigned k=0; k<convKernels[i][j].size(); k++) {
+				this->toggleOptimize(&(convKernels[i][j][k]), enable);
+			}
+		}
 	}
 
 	for(unsigned i=0; i<weights.size(); i++) {
@@ -416,23 +440,54 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	// Make sure input is large enough for first convolution
 	if(
-	input.getValue().rows() != expectedInput[0] ||
-	input.getValue().cols() != expectedInput[1]
+		input.getValue().rows() != expectedInput[0] ||
+		input.getValue().cols() != expectedInput[1]
 	) {
-		return ts::Tensor<T>(
-			Eigen::Array<T, 0, 0>(),
-			&(this->wList)
-		);
+		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), &(this->wList));
 	}
+
+
+	// Convert input to a size 1 vector (for number of channels)
+	std::vector<ts::Tensor<T>> inputVec = {input};
+
 
 	// 1) Convolution / pooling computation loop
 	for(unsigned i=0; i<convKernels.size(); i++) {
-		input = (*activationFunction)(convolution(input, convKernels[i]));
-		input = maxPooling(input, pooling[i]);
+
+		// We will need to backup the values of the previous layer to compute
+		// the new one
+		std::vector<ts::Tensor<T>> tmp = inputVec;
+
+		inputVec = {};
+
+		// For each output channel ...
+		for(unsigned j=0; j<convKernels[i].size(); j++) {
+			inputVec.push_back( ts::convolution(tmp[0], convKernels[i][j][0]) );
+
+			// For each input channel ...
+			// (add other elements)
+			for(unsigned k=1; k<convKernels[i][j].size(); k++) {
+				inputVec[j] = inputVec[j] + ts::convolution(tmp[k], convKernels[i][j][k]);
+			}
+
+
+			// A pooling layer of size 0 means we want to skip it
+			if(pooling[i][0] != 0 || pooling[i][1] != 0) {
+				inputVec[j] = ts::maxPooling(inputVec[j], pooling[i]);
+			}
+
+			inputVec[j] = (*activationFunction)(inputVec[j]);
+
+		}
+
 	}
 
-	// 2) Flatten convolution output
-	input = flattening(input);
+
+
+	// 2) Gather all channels back to input tensor,
+	// and flatten convolution outputs
+	input = flattening(vertCat(inputVec));
+
 
 	// 3) Dense layers computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
@@ -448,7 +503,17 @@ template <typename T>
 void ts::ConvolutionalNetwork<T>::save(std::string filePath) {
 	std::ofstream out(filePath);
 
-	out << ts::serializeTensorsVector(convKernels);
+
+	// TODO Recursive function to save tensor of dimension n as a vector of
+	// a tensor of dimension n-1
+	out << convKernels.size() << std::endl;
+	for(unsigned i=0; i<convKernels.size(); i++) {
+		out << convKernels[i].size() << std::endl;
+		for(unsigned j=0; j<convKernels[i].size(); j++) {
+			out << ts::serializeTensorsVector(convKernels[i][j]);
+		}
+	}
+
 	out << ts::serializeTensorsVector(weights);
 	out << ts::serializeTensorsVector(biases);
 
@@ -468,9 +533,32 @@ void ts::ConvolutionalNetwork<T>::load(std::string filePath) {
 	// Load new tensors
 	std::ifstream in(filePath);
 
-	convKernels = ts::parseTensorsVector(in, &(this->wList));
+
+	// TODO Same recursive function for parsing ?
+
+	std::string line;
+	std::getline(in, line);
+	unsigned size = std::stoi(line);
+	unsigned subsize;
+
+	convKernels = {};
+
+	for(unsigned i=0; i<size; i++) {
+		std::getline(in, line);
+		subsize = std::stoi(line);
+
+		convKernels.push_back({});
+
+		for(unsigned j=0; j<subsize; j++) {
+			convKernels[i].push_back(ts::parseTensorsVector(in, &(this->wList)));
+		}
+
+	}
+
+
 	weights = ts::parseTensorsVector(in, &(this->wList));
 	biases = ts::parseTensorsVector(in, &(this->wList));
+
 
 	in.close();
 }

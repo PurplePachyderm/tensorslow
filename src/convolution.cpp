@@ -272,6 +272,117 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 
+// Vertical concatenation
+
+template <typename T>
+ts::VertCatNode<T>::VertCatNode(
+	std::vector<long> shape,
+	std::vector<int> newDependencies,
+	std::vector<long> newHeights
+) {
+
+	// VertCatNode specific constructor to store the height of first matrix
+	// This way we can copy correct elements in inrementGradient
+
+	// New tensor shape (vector)
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	this->dependencies =  newDependencies;
+
+	// Height of the first matrix
+	heights = newHeights;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::VertCatNode<T>::incrementGradient(
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+	unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
+	// for a matrix flattening.
+
+	// childDerivative is a flattened vector. We need to convert it back to a
+	// matrix with the dimensions of the original matrix.
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
+	mat.resize(heights[j+1] - heights[j], childDerivative.cols());
+
+	mat = childDerivative.block(
+		heights[j], 0,
+		heights[j+1] - heights[j], childDerivative.cols()
+	);
+
+
+	return mat;
+}
+
+
+
+template <typename T>
+ts::Tensor<T> ts::vertCat(const std::vector<ts::Tensor<T>> &x) {
+	// Vertical concatenation operation
+	// x[i] will be under x[i-1]
+
+	if(x.size() == 0) {
+		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
+	}
+
+
+	// The gradient will have to be computed for a scalar
+	x[0].wList->elementWiseOnly = false;
+
+
+	// Compute size of resulting matrix, and storing each input matrix position
+	// We will also make sure that all matrices have the same width / wList
+
+	std::vector<long> heights = {0}; // WARNING Values are cumulative starting heights
+	long height = 0;
+	long width = x[0].value.cols();
+	std::vector<int> dependencies = {};
+
+	for(unsigned i=0; i<x.size(); i++) {
+
+		if(
+			x[i].value.cols() != width ||
+			x[i].wList != x[0].wList
+		) {
+			return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
+		}
+
+		height += x[i].value.rows();
+		heights.push_back(height);
+		dependencies.push_back(x[i].index);
+
+	}
+
+
+	// Set res vector
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
+	res.resize(height, width);
+
+	for(unsigned i=0; i<x.size(); i++) {
+		res.block(heights[i], 0, heights[i+1] - heights[i], width) = x[i].value;
+	}
+
+
+	// Return
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::VertCatNode<T>(
+			{res.rows(), res.cols()},
+			dependencies,
+			heights
+		)
+	);
+
+	return ts::Tensor<T>(res, x[0].wList, nodePtr);
+}
+
+
+
 // Flattening
 
 template <typename T>
