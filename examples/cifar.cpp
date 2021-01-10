@@ -18,6 +18,7 @@
 #define IMAGE_WIDTH 32
 // Images are stored in row-major order with each color component separated
 #define IMAGE_HEIGHT 96
+#define N_CLASSES 10
 
 
 
@@ -97,8 +98,24 @@ std::vector<std::vector< ts::TrainingData<float> >> readCifar(
 
 
 
+std::vector<std::string> readClassNames(std::ifstream &file) {
+	std::vector<std::string> classes = {};
+	std::string tmp = "";
+
+	for(unsigned i=0; i<N_CLASSES; i++) {
+		std::getline(file, tmp);
+		classes.push_back(tmp);
+	}
+
+	return classes;
+}
+
+
+
 // Small function to display an image in terminal given its Eigen array
 void asciiCifar(Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> img) {
+
+	float pixelValue;
 
 	std::cout << "┌";
 	for(unsigned i=0; i<IMAGE_WIDTH; i++) {
@@ -106,11 +123,14 @@ void asciiCifar(Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> img) {
 	}
 	std::cout << "┐" << std::endl;
 
-	for(unsigned i=0; i<IMAGE_HEIGHT; i++) {
+	for(unsigned i=0; i<IMAGE_WIDTH; i++) {
 		std::cout << "│";
 
 		for(unsigned j=0; j<IMAGE_WIDTH; j++) {
 
+			// Compute avg value for all 3 colors
+			pixelValue = img(i, j) + img(i + IMAGE_WIDTH, j) + img(i + 2 * IMAGE_WIDTH, j);
+			pixelValue = pixelValue / 3;
 
 			if(img(i, j) == 0.0f) {
 				std::cout << " ";
@@ -146,7 +166,7 @@ int main(void) {
 
 
 	unsigned batchSize = 5;
-	unsigned nBatches = 500;
+	unsigned nBatches = 1000;
 	unsigned nEpochs = 3;
 
 	unsigned nTests = 100;
@@ -204,7 +224,7 @@ int main(void) {
 		{{2,2}, {2,2}, {0, 0}},
 
 		// Dense layers (with output vector & not including first layer)
-		{64, 10}
+		{64, N_CLASSES}
 	);
 
 	model.toggleGlobalOptimize(true);
@@ -224,6 +244,12 @@ int main(void) {
 
 	// Run tests (prediction phase)
 
+	// Display result
+	std::ifstream classFile(
+		"examples/cifar/batches.meta.txt", std::ios::binary
+	);
+	std::vector<std::string> classes = readClassNames(classFile);
+
 	unsigned nSuccesses = 0;
 	unsigned nErrors = 0;
 
@@ -239,22 +265,17 @@ int main(void) {
 
 		model.wList.reset();
 
-
-		// Display result
-
 		std::cout << "*******************************************" << std::endl;
 
 		std::cout << "Test " << i << ":" << std::endl;
 
-		// TODO Display ASCII ? Possile to get a good result ?
 		asciiCifar(testingData[i].input);
-		// std::cout << testingData[i].input << std::endl;
 
 		// Display label (expected output)
 		unsigned label = 0;
 		for(unsigned j=0; j<10; j++) {
 			if(testingData[i].expected(j, 0) == 1.0f) {
-				std::cout << "Label :" << j << std::endl;
+				std::cout << "Label :" << classes[j] << std::endl;
 				label = j;
 			}
 		}
@@ -272,10 +293,10 @@ int main(void) {
 			}
 		}
 
-		std::cout << "Prediction (" << prediction << "):" << std::endl;
+		std::cout << "Prediction (" << classes[prediction] << "):" << std::endl;
 
 		for(unsigned j=0; j<10; j++) {
-			std::cout << j << ": " << result(j) << std::endl;
+			std::cout << classes[j] << ": " << result(j) << std::endl;
 		}
 
 		if(prediction == label) {
