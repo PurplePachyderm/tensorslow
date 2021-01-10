@@ -230,6 +230,9 @@ TEST(Convolution, FullCNN) {
 		// Input
 		{10, 10},
 
+		// Input channels
+		ts::NOSPLIT, 1,
+
 		// Convolution / pooling (we'll manually add it later)
 		{},
 		{},

@@ -97,6 +97,48 @@ std::vector<std::vector< ts::TrainingData<float> >> readCifar(
 
 
 
+// Small function to display an image in terminal given its Eigen array
+void asciiCifar(Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> img) {
+
+	std::cout << "┌";
+	for(unsigned i=0; i<IMAGE_WIDTH; i++) {
+		std::cout << "─";
+	}
+	std::cout << "┐" << std::endl;
+
+	for(unsigned i=0; i<IMAGE_HEIGHT; i++) {
+		std::cout << "│";
+
+		for(unsigned j=0; j<IMAGE_WIDTH; j++) {
+
+
+			if(img(i, j) == 0.0f) {
+				std::cout << " ";
+			} else if(img(i, j) < 0.25) {
+				std::cout << "░";
+			} else if(img(i, j) < 0.5f) {
+				std::cout << "▒";
+			} else if(img(i, j) < 0.75f) {
+				std::cout << "▓";
+			} else {
+				std::cout << "█";
+			}
+
+		}
+
+		std::cout << "│" << std::endl;
+	}
+
+	std::cout << "└";
+	for(unsigned i=0; i<IMAGE_WIDTH; i++) {
+		std::cout << "─";
+	}
+	std::cout << "┘" << std::endl;
+
+}
+
+
+
 int main(void) {
 
 	std::cout << std::setprecision(3);
@@ -104,7 +146,7 @@ int main(void) {
 
 
 	unsigned batchSize = 5;
-	unsigned nBatches = 100;
+	unsigned nBatches = 500;
 	unsigned nEpochs = 3;
 
 	unsigned nTests = 100;
@@ -154,8 +196,11 @@ int main(void) {
 		// Input
 		{IMAGE_HEIGHT, IMAGE_WIDTH},
 
+		// Number of channels for input (3 for RGB)
+		ts::SPLIT_HOR, 3,
+
 		// Convolution / pooling
-		{{9, 3, 32}, {17, 4, 64}, {9, 3, 64}},
+		{{3, 3, 32}, {4, 4, 64}, {3, 3, 64}},
 		{{2,2}, {2,2}, {0, 0}},
 
 		// Dense layers (with output vector & not including first layer)
@@ -165,7 +210,6 @@ int main(void) {
 	model.toggleGlobalOptimize(true);
 
 
-	// Adam optimizer is now the default one
 	ts::AdamOptimizer<float> optimizer;
 
 	optimizer.epochs = nEpochs;
@@ -176,14 +220,6 @@ int main(void) {
 
 
 	std::cout << "Training phase complete !" << std::endl << std::endl;
-
-	// TESTING
-	ts::Tensor<float> input = ts::Tensor<float>(trainingData[0][0].input, &model.wList);
-	ts::Tensor<float> output = model.compute(input);
-	std::cout << "ACTUAL" << std::endl;
-	std::cout << output.getValue() << std::endl;
-	std::cout << "EXPECTED" << std::endl;
-	std::cout << trainingData[0][0].expected << std::endl;
 
 
 	// Run tests (prediction phase)
@@ -211,7 +247,8 @@ int main(void) {
 		std::cout << "Test " << i << ":" << std::endl;
 
 		// TODO Display ASCII ? Possile to get a good result ?
-		// asciiDigit(testingData[i].input);
+		asciiCifar(testingData[i].input);
+		// std::cout << testingData[i].input << std::endl;
 
 		// Display label (expected output)
 		unsigned label = 0;

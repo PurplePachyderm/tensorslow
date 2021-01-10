@@ -258,6 +258,7 @@ void ts::MultiLayerPerceptron<T>::load(std::string filePath) {
 template <typename T>
 ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	std::vector<unsigned> inputSize,
+	ts::ChannelSplit splitDirection, unsigned inputChannels,
 	std::vector<std::vector<unsigned>> convLayers,
 	std::vector<std::vector<unsigned>> poolingLayers,
 	std::vector<unsigned> denseLayers
@@ -288,6 +289,37 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 
 
 	std::vector<int> intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
+
+	// Make sure channel splitting is possible
+
+	// Splitting rows
+	if(splitDirection == ts::SPLIT_HOR) {
+		if(
+			inputSize[0] % inputChannels != 0 ||
+			inputSize[0] < inputChannels
+		) {
+			std::cout << "ERROR: Impossible to split horizontally"
+			<< std::endl;
+			return;
+		}
+
+		intermediarySize = {(int) inputSize[0] / (int) inputChannels, (int) inputSize[1]};
+	}
+
+	// Splitting cols
+	if(splitDirection == ts::SPLIT_VERT) {
+		if(
+			inputSize[1] % inputChannels != 0 ||
+			inputSize[1] < inputChannels
+		) {
+			std::cout << "ERROR: Impossible to split vertically"
+			<< std::endl;
+			return;
+		}
+
+		intermediarySize = {(int) inputSize[0], (int) inputSize[1] / (int) inputChannels};
+	}
+
 
 	// Make sure convolutions / poolings are possible
 	for(unsigned i=0; i<convLayers.size(); i++) {
@@ -350,8 +382,11 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 
 	// Convolution layers
 
+	channelSplit = splitDirection;
+	nInputChannels = inputChannels;
+
 	// This is the input of the network, of dimension 1
-	convLayers.insert(convLayers.begin(), {0, 0, 1});
+	convLayers.insert(convLayers.begin(), {0, 0, inputChannels});
 
 	convKernels = {};
 
@@ -447,8 +482,48 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	}
 
 
-	// Convert input to a size 1 vector (for number of channels)
-	std::vector<ts::Tensor<T>> inputVec = {input};
+	// Convert input to vector (for number of channels)
+	// NOTE We probably don't need to define an operation with derivative,
+	// since we won't be interested in the derivative with regarespect to the
+	// input in a realistic situation
+
+	std::vector<ts::Tensor<T>> inputVec = {};
+
+	if(channelSplit == SPLIT_HOR) {
+		unsigned channelSize = input.getValue().rows() / nInputChannels;
+		for(unsigned i=0; i<nInputChannels; i++) {
+
+			inputVec.push_back(
+				ts::Tensor<T>(
+					input.getValue().block(
+						i * channelSize, 0, channelSize, input.getValue().cols()
+					),
+					&(this->wList)
+				)
+			);
+
+		}
+	}
+
+	if(channelSplit == SPLIT_VERT) {
+		unsigned channelSize = input.getValue().cols() / nInputChannels;
+		for(unsigned i=0; i<nInputChannels; i++) {
+
+			inputVec.push_back(
+				ts::Tensor<T>(
+					input.getValue().block(
+						0, i * channelSize, input.getValue().rows(), channelSize
+					),
+					&(this->wList)
+				)
+			);
+
+		}
+	}
+
+	if(channelSplit == NOSPLIT) {
+		inputVec.push_back(input);
+	}
 
 
 	// 1) Convolution / pooling computation loop
@@ -477,22 +552,22 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 			}
 
 			inputVec[j] = (*activationFunction)(inputVec[j]);
-
 		}
 
 	}
 
 
-
 	// 2) Gather all channels back to input tensor,
 	// and flatten convolution outputs
-	input = flattening(vertCat(inputVec));
+	input = vertCat(inputVec);
+	input = flattening(input);
 
 
 	// 3) Dense layers computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
 		input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
 	}
+
 
 	return input;
 }

@@ -22,6 +22,13 @@ namespace ts {
 
 	// Friends forward declaration
 	template <typename T> class GradientAccumulator;
+
+	// Enum for channel splitting directions in CNN
+	enum ChannelSplit {
+		NOSPLIT,
+		SPLIT_HOR,	// Splits lines
+		SPLIT_VERT	// Splits columns
+	};
 }
 
 
@@ -113,6 +120,7 @@ private:
 public:
 	ConvolutionalNetwork(
 		std::vector<unsigned> inputSize,
+		ts::ChannelSplit splitDirection, unsigned inputChannels,
 		std::vector<std::vector<unsigned>> convLayers,
 		std::vector<std::vector<unsigned>> poolingLayers,
 		std::vector<unsigned> denseLayers
@@ -129,6 +137,9 @@ public:
 	std::vector<std::vector<unsigned>> pooling;
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
+
+	ts::ChannelSplit channelSplit = NOSPLIT;
+	unsigned nInputChannels = 1;
 
 	void toggleGlobalOptimize(bool enable);
 
