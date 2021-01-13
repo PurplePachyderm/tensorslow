@@ -28,6 +28,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
 	res.resize(mat.rows() - ker.rows() + 1, mat.cols() - ker.cols() + 1);
 
+	#pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<mat.rows() - ker.rows() + 1; i++) {
 		for(unsigned j=0; j<mat.cols() - ker.cols() + 1; j++) {
 			// Compute one element of feature map

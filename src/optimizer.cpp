@@ -76,6 +76,7 @@ ts::GradientAccumulator<T>::GradientAccumulator(ts::Model<T> &model) {
 
 template <typename T>
 void ts::GradientAccumulator<T>::reset() {
+	// #pragma omp parallel for
 	for(unsigned i=0; i<elements.size(); i++) {
 		elements[i].reset();
 	}
@@ -87,6 +88,7 @@ template <typename T>
 void ts::GradientAccumulator<T>::increment(ts::Gradient<T> &gradient) {
 	// Increment all elements of gradAccumulator according to gradient
 
+	// #pragma omp parallel for
 	for(unsigned i=0; i<elements.size(); i++) {
 		// We use two different indices systems here
 		// (one for the wList/grad and one for the gradient accumulator)
@@ -139,6 +141,7 @@ template <typename T>
 void ts::GradientDescentOptimizer<T>::updateModel(
 	ts::Model<T> &model, unsigned batchSize
 ) {
+	// #pragma omp parallel for
 	for(unsigned i=0; i<this->gradAccumulator.elements.size(); i++) {
 		this->gradAccumulator.updateTensor(
 			model, i,
@@ -161,17 +164,17 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 
 		// Start running and training the model
 
-	std::vector<std::vector<std::vector< T >>> losses = {};
+		std::vector<std::vector<std::vector< T >>> losses(this->epochs, (std::vector<std::vector<T>>) {});
 
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
 
-		losses.push_back( {} );
+		losses[i] = std::vector<std::vector<T>>(batches.size(), (std::vector<T>) {});
 
 		// Batches
 		for(unsigned j=0; j<batches.size(); j++) {
 
-			losses[i].push_back( {} );
+			losses[i][j] = std::vector<T>(batches[j].size(), 0);
 
 			// Data instance
 			for(unsigned k=0; k<batches[j].size(); k++) {
@@ -193,11 +196,13 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 
 				model.wList.reset();
 
-				losses[i][j].push_back(norm.getValue()(0, 0));
+				losses[i][j][k] = norm.getValue()(0, 0);
 			}
 
 			updateModel(model, batches[j].size());
 			this->gradAccumulator.reset();
+
+			std::cout << "Epoch " << i << ", Batch " << j << std::endl;
 		}
 	}
 
@@ -232,6 +237,7 @@ template <typename T>
 void ts::AdamOptimizer<T>::updateModel(
 	ts::Model<T> &model, unsigned batchSize
 ) {
+	// #pragma omp parallel for
 	for(unsigned i=0; i<this->gradAccumulator.elements.size(); i++) {
 		this->gradAccumulator.updateTensor(
 			model, i,
@@ -312,17 +318,17 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 
 		// Start running and training the model
 
-	std::vector<std::vector<std::vector< T >>> losses = {};
+		std::vector<std::vector<std::vector< T >>> losses(this->epochs, (std::vector<std::vector<T>>) {});
 
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
 
-		losses.push_back( {} );
+		losses[i] = std::vector<std::vector<T>>(batches.size(), (std::vector<T>) {});
 
 		// Batches
 		for(unsigned j=0; j<batches.size(); j++) {
 
-			losses[i].push_back( {} );
+			losses[i][j] = std::vector<T>(batches[j].size(), 0);
 
 			// Data instance
 			for(unsigned k=0; k<batches[j].size(); k++) {
@@ -348,7 +354,7 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 
 				model.wList.reset();
 
-				losses[i][j].push_back(norm.getValue()(0, 0));
+				losses[i][j][k] = norm.getValue()(0, 0);
 			}
 
 			updateModel(model, batches[j].size());
@@ -357,6 +363,8 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 			// Decay betas
 			decayedBeta1 = decayedBeta1 * beta1;
 			decayedBeta2 = decayedBeta2 * beta2;
+
+			std::cout << "Epoch " << i << ", Batch " << j << std::endl;
 		}
 	}
 

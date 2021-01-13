@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <omp.h>
 
 #include "../include/tensorslow.h"
 
@@ -163,7 +164,7 @@ int main(void) {
 
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
-
+	omp_set_num_threads(4);
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
@@ -224,7 +225,7 @@ int main(void) {
 		{{2,2}, {2,2}, {0, 0}},
 
 		// Dense layers (with output vector & not including first layer)
-		{64, N_CLASSES}
+		{1024, 64, N_CLASSES}
 	);
 
 	model.toggleGlobalOptimize(true);

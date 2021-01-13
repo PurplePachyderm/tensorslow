@@ -4,8 +4,14 @@
 * threads than your number of physical cores.
 */
 
+// NOTE This benchmark was initially created to test the speedup provided
+// by Eigen's OpenMP parallelization. Because results were not convincing,
+// it is now disabled by default. To re-enable it, recompile the library after
+// removing the EIGEN_DONT_PARALLELIZE token from tensorslow.h
+
 #include <iostream>
 #include <benchmark/benchmark.h>
+#include <omp.h>
 
 #include "../include/tensorslow.h"
 
