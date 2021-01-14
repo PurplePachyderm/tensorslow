@@ -16,6 +16,10 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
 ) {
 
+	// This is a basic and slow implementation of convolution. It is not used
+	// anymore in our CNN model. For a more efficient version, see the im2col
+	// version.
+
 	// Make sure kernel is smaller
 	if(
 		mat.rows() < ker.rows() ||
@@ -24,18 +28,84 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 		return Eigen::Array<T, 0, 0>();
 	}
 
+	unsigned newRows = mat.rows() - ker.rows() + 1;
+	unsigned newCols = mat.cols() - ker.cols() + 1;
+
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
-	res.resize(mat.rows() - ker.rows() + 1, mat.cols() - ker.cols() + 1);
+	res.resize(newRows, newCols);
 
 	#pragma omp parallel for collapse(2)
-	for(unsigned i=0; i<mat.rows() - ker.rows() + 1; i++) {
-		for(unsigned j=0; j<mat.cols() - ker.cols() + 1; j++) {
+	for(unsigned i=0; i<newRows; i++) {
+		for(unsigned j=0; j<newCols; j++) {
 			// Compute one element of feature map
 			res(i, j) =
 			(mat.block(i, j, ker.rows(), ker.cols()) * ker).sum();
 		}
 	}
+
+	return res;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
+	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
+	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
+) {
+
+	// This is a version of convolution using the im2col approach.
+	// Even though this method is considered more
+	// computationally efficient, it requires more memory.
+
+	// Make sure ker is smaller than mat
+	if(mat.rows() < ker.rows() || mat.cols() < ker.cols()) {
+		return Eigen::Array<T, 0, 0>();
+	}
+
+
+		// 1) Use im2col method to convert mat
+
+	unsigned newRows = mat.rows() - ker.rows() + 1;
+	unsigned newCols = mat.cols() - ker.cols() + 1;
+
+	// Flatten and get new kernel height
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> vertKer = ker;
+	vertKer = Eigen::Map<Eigen::Array<T, -1, 1>>(
+		vertKer.data(), vertKer.cols() * vertKer.rows()
+	);
+	unsigned height = vertKer.rows();
+
+
+	// Generate res matrix for product
+	// RowMajor is needed for resize at the end
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> res;
+	res.setZero(
+		newRows * newCols,
+		height
+	);
+
+
+	#pragma omp parallel for collapse(2)
+	for(unsigned i=0; i<newRows; i++) {
+		for(unsigned j=0; j<newCols; j++) {
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
+
+			tmp = mat.block(i, j, ker.rows(), ker.cols());
+			tmp = Eigen::Map<Eigen::Array<T, 1, -1>>(
+				tmp.data(), tmp.cols()*tmp.rows()
+			);
+			res.block(i * newCols + j, 0, 1, height) = tmp;
+		}
+	}
+
+
+
+		// 2) Compute matrix product
+
+	res = res.matrix() * vertKer.matrix();
+	res.resize(newRows, newCols);
 
 	return res;
 }
@@ -89,11 +159,6 @@ ts::Tensor<T> ts::convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker
 	// The gradient will have to be computed for a scalar
 	mat.wList->elementWiseOnly = false;
 
-
-	// res = conv(mat, ker)
-	// dMat = ker.rotate(180) + padding
-	// dKer = mat
-	// (will be used in another convolution for gradient)
 
 	// Compute res
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = ts::convArray(

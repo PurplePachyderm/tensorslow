@@ -75,6 +75,10 @@ template Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &mat,
 	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &ker
 );
+template Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
+	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &mat,
+	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &ker
+);
 template class ts::ConvolutionNode<float>;
 template ts::Tensor<float> ts::convolution(
 	const ts::Tensor<float> &mat, const ts::Tensor<float> &ker
@@ -143,6 +147,10 @@ template std::vector<ts::Tensor<double>> ts::parseTensorsVector(
 );
 
 template Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
+	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &mat,
+	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &ker
+);
+template Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
 	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &mat,
 	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &ker
 );

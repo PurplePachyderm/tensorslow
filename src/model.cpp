@@ -482,9 +482,10 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	}
 
 
-	// Convert input to vector (for number of channels)
+	// Convert input to 2D vector (for number of channels) for use with the
+	// im2col method. This should be a faster way to compute convolutions.
 	// NOTE We probably don't need to define an operation with derivative,
-	// since we won't be interested in the derivative with regarespect to the
+	// since we won't be interested in the derivative with respect to the
 	// input in a realistic situation
 
 	std::vector<ts::Tensor<T>> inputVec = {};
@@ -493,14 +494,19 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 		unsigned channelSize = input.getValue().rows() / nInputChannels;
 		for(unsigned i=0; i<nInputChannels; i++) {
 
-			inputVec.push_back(
-				ts::Tensor<T>(
-					input.getValue().block(
-						i * channelSize, 0, channelSize, input.getValue().cols()
-					),
-					&(this->wList)
-				)
+			// Get matrix form of block
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
+			input.getValue().block(
+				i * channelSize, 0, channelSize, input.getValue().cols()
 			);
+
+			// Conversion to vector form
+			// tmp = Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>(
+			// 	Map<VectorXd>(tmp.data(), tmp.cols()*tmp.rows())
+			// );
+
+			// Create associated Tensor
+			inputVec.push_back(ts::Tensor<T>(tmp,&(this->wList)));
 
 		}
 	}
@@ -509,14 +515,19 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 		unsigned channelSize = input.getValue().cols() / nInputChannels;
 		for(unsigned i=0; i<nInputChannels; i++) {
 
-			inputVec.push_back(
-				ts::Tensor<T>(
-					input.getValue().block(
-						0, i * channelSize, input.getValue().rows(), channelSize
-					),
-					&(this->wList)
-				)
+			// Get matrix form of block
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
+			input.getValue().block(
+				0, i * channelSize, input.getValue().rows(), channelSize
 			);
+
+			// Conversion to vector form
+			// tmp = Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>(
+			// 	Map<VectorXd>(tmp.data(), tmp.cols()*tmp.rows())
+			// );
+
+			// Create associated Tensor
+			inputVec.push_back(ts::Tensor<T>(tmp,&(this->wList)));
 
 		}
 	}

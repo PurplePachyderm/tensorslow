@@ -17,34 +17,34 @@ TEST(Convolution, Convolution) {
 	ts::WengertList<float> wList;
 
 
-	Eigen::Array<float, 9, 9> mat_;
+	Eigen::Array<float, 9, 10> mat_;
 	mat_ <<
-	-1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1,  1, -1, -1, -1, -1, -1,  1, -1,
-	-1, -1,  1, -1, -1, -1,  1, -1, -1,
-	-1, -1, -1,  1, -1,  1, -1, -1, -1,
-	-1, -1, -1, -1,  1, -1, -1, -1, -1,
-	-1, -1, -1,  1, -1,  1, -1, -1, -1,
-	-1, -1,  1, -1, -1, -1,  1, -1, -1,
-	-1,  1, -1, -1, -1, -1, -1,  1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1;
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, 1,
+	-1,  1, -1, -1, -1, -1, -1,  1, -1, 2,
+	-1, -1,  1, -1, -1, -1,  1, -1, -1, 3,
+	-1, -1, -1,  1, -1,  1, -1, -1, -1, 4,
+	-1, -1, -1, -1,  1, -1, -1, -1, -1, 5,
+	-1, -1, -1,  1, -1,  1, -1, -1, -1, 6,
+	-1, -1,  1, -1, -1, -1,  1, -1, -1, 7,
+	-1,  1, -1, -1, -1, -1, -1,  1, -1, 8,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, 9;
 
 	Eigen::Array<float, 3, 3> ker_;
 	ker_ <<
 	 1, -1, -1,
-	-1,  1, -1,
+	-1,  1,  2,
 	-1, -1,  1;
 
 
-	Eigen::Array<float, 7, 7> res_;
+	Eigen::Array<float, 7, 8> res_;
 	res_ <<
-	 7, -1,  1,  3,  5, -1,  3,
-	-1,  9, -1,  3, -1,  1, -1,
-	 1, -1,  9, -3,  1, -1,  5,
-	 3,  3, -3,  5, -3,  3,  3,
-	 5, -1,  1, -3,  9, -1,  1,
-	-1,  1, -1,  3, -1,  9, -1,
-	 3, -1,  5,  3,  1, -1,  7;
+	 4, -4, -2,  0,  2,  2,  0,  6,
+     2,  6, -4,  0,  2, -2, -4, 12,
+    -2,  2,  6,  0, -2, -4,  2, 12,
+     0,  0,  0,  2, -6,  0,  0, 14,
+     2,  2, -2,  0,  6, -4, -2, 16,
+     2, -2, -4,  0,  2,  6, -4, 16,
+     0, -4,  2,  0, -2,  2,  4, 18;
 
 
 	ts::Tensor<float> mat = ts::Tensor<float>(mat_, &wList);
@@ -52,13 +52,8 @@ TEST(Convolution, Convolution) {
 
 	ts::Tensor<float> res = ts::convolution(mat, ker);
 
-
-	// Grad should be empty because res is not a scalar
-	ts::Gradient<float> grad = res.grad();
-	EXPECT_EQ(grad.isEmpty(), true);
-
 	EXPECT_EQ(res.getValue().rows(), 7);
-	EXPECT_EQ(res.getValue().cols(), 7);
+	EXPECT_EQ(res.getValue().cols(), 8);
 
 	for(unsigned i=0; i<7; i++) {
 		for(unsigned j=0; j<7; j++) {
@@ -66,9 +61,9 @@ TEST(Convolution, Convolution) {
 		}
 	}
 
-	// Get correct gradient
+	// // Get correct gradient
 	res = ts::squaredNorm(res);
-	grad = res.grad();
+	ts::Gradient<float> grad = res.grad();
 	EXPECT_EQ(grad.isEmpty(), false);
 }
 
