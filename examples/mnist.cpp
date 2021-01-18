@@ -287,6 +287,8 @@ int main(void) {
 
 	ts::MultiLayerPerceptron<float> model(EXPECTED_IMAGE_SIZE, layers);
 	model.toggleGlobalOptimize(true);
+	model.activationFunction = &(ts::sigmoid);
+	model.finalActivation = &(ts::sigmoid);
 
 
 

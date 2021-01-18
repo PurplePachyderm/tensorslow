@@ -215,7 +215,14 @@ ts::Tensor<T> ts::MultiLayerPerceptron<T>::compute(ts::Tensor<T> input) {
 
 	// Begin computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
-		input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
+		// Hidden layer
+		if(i < weights.size() - 1) {
+			input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
+		}
+		// Final layer (we might want another activation function)
+		else {
+			input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
+		}
 	}
 
 	return input;
@@ -500,11 +507,6 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 				i * channelSize, 0, channelSize, input.getValue().cols()
 			);
 
-			// Conversion to vector form
-			// tmp = Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>(
-			// 	Map<VectorXd>(tmp.data(), tmp.cols()*tmp.rows())
-			// );
-
 			// Create associated Tensor
 			inputVec.push_back(ts::Tensor<T>(tmp,&(this->wList)));
 
@@ -520,11 +522,6 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 			input.getValue().block(
 				0, i * channelSize, input.getValue().rows(), channelSize
 			);
-
-			// Conversion to vector form
-			// tmp = Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>(
-			// 	Map<VectorXd>(tmp.data(), tmp.cols()*tmp.rows())
-			// );
 
 			// Create associated Tensor
 			inputVec.push_back(ts::Tensor<T>(tmp,&(this->wList)));
@@ -562,7 +559,7 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 				inputVec[j] = ts::maxPooling(inputVec[j], pooling[i]);
 			}
 
-			inputVec[j] = (*activationFunction)(inputVec[j]);
+			inputVec[j] = (*convActivation)(inputVec[j]);
 		}
 
 	}
@@ -576,7 +573,7 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	// 3) Dense layers computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
-		input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
+		input = (*denseActivation)(matProd(weights[i], input) + biases[i]);
 	}
 
 

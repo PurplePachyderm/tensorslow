@@ -199,10 +199,12 @@ ts::Tensor<T> ts::relu(const ts::Tensor<T> &x) {
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = x.value;
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx = x.value;
 
-	for(unsigned i=0; i<res.rows(); i++) {
-		for(unsigned j=0; j<res.cols(); j++) {
-			res(i,j) =  (res(i,j) < 0) ? 0 : res(i,j);
-			dx(i,j) =  (res(i,j) != 0) ? 1.0 : 0;
+
+	#pragma omp parallel for
+	for(unsigned i=0; i<res.cols(); i++) {
+		for(unsigned j=0; j<res.rows(); j++) {
+			res(j, i) =  (res(j,i) < 0) ? 0 : res(j, i);
+			dx(j, i) =  (res(j,i) < 0) ? 0 : 1.0;
 		}
 	}
 

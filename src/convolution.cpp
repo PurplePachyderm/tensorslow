@@ -36,11 +36,11 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	res.resize(newRows, newCols);
 
 	#pragma omp parallel for collapse(2)
-	for(unsigned i=0; i<newRows; i++) {
-		for(unsigned j=0; j<newCols; j++) {
+	for(unsigned i=0; i<newCols; i++) {
+		for(unsigned j=0; j<newRows; j++) {
 			// Compute one element of feature map
-			res(i, j) =
-			(mat.block(i, j, ker.rows(), ker.cols()) * ker).sum();
+			res(j, i) =
+			(mat.block(j, i, ker.rows(), ker.cols()) * ker).sum();
 		}
 	}
 
@@ -88,15 +88,15 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
 
 
 	#pragma omp parallel for collapse(2)
-	for(unsigned i=0; i<newRows; i++) {
-		for(unsigned j=0; j<newCols; j++) {
+	for(unsigned i=0; i<newCols; i++) {
+		for(unsigned j=0; j<newRows; j++) {
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
 
-			tmp = mat.block(i, j, ker.rows(), ker.cols());
+			tmp = mat.block(j, i, ker.rows(), ker.cols());
 			tmp = Eigen::Map<Eigen::Array<T, 1, -1>>(
 				tmp.data(), tmp.cols()*tmp.rows()
 			);
-			res.block(i * newCols + j, 0, 1, height) = tmp;
+			res.block(j * newCols + i, 0, 1, height) = tmp;
 		}
 	}
 
@@ -233,14 +233,14 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::PoolingNode<T>::incrementGra
 	// Affect coefficients of childDerivative to upsample pools by filling each
 	// pool with the corresponding value
 
-	for(unsigned i=0; i<childDerivative.rows(); i++) {
-		for(unsigned j=0; j<childDerivative.cols(); j++) {
+	for(unsigned i=0; i<childDerivative.cols(); i++) {
+		for(unsigned j=0; j<childDerivative.rows(); j++) {
 
 			// Fill one pool with one value
-			for(unsigned k=0; k<pool[0]; k++) {
-				for(unsigned l=0; l<pool[1]; l++) {
-					upsample(i * pool[0] + k, j * pool[1] + l) =
-					childDerivative(i, j);
+			for(unsigned k=0; k<pool[1]; k++) {
+				for(unsigned l=0; l<pool[0]; l++) {
+					upsample(j * pool[0] + l, i * pool[1] + k) =
+					childDerivative(j, i);
 				}
 			}
 
@@ -294,31 +294,31 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 	// Compute both pooled matrix (res) and dx
-	for(unsigned i=0; i<res.rows(); i++) {
-		for(unsigned j=0; j<res.cols(); j++) {
+	for(unsigned i=0; i<res.cols(); i++) {
+		for(unsigned j=0; j<res.rows(); j++) {
 
 			// Get index of pool's max element
 			// (for now it seems the best way is to manually iterate over
 			// elements)
 
-			xMax = i * pool[0];
-			yMax = j * pool[1];
-			maxVal = x.value(i * pool[0], j * pool[1]);
+			xMax = j * pool[0];
+			yMax = i * pool[1];
+			maxVal = x.value(j * pool[0], i * pool[1]);
 
-			for(unsigned k=0; k<pool[0]; k++) {
-				for(unsigned l=0; l<pool[1]; l++) {
+			for(unsigned k=0; k<pool[1]; k++) {
+				for(unsigned l=0; l<pool[0]; l++) {
 
-					if(x.value(i * pool[0] + k, j * pool[1] + l) > maxVal) {
-						maxVal = x.value(i * pool[0] + k, j * pool[1] + l);
-						xMax = i * pool[0] + k;
-						yMax = j * pool[1] + l;
+					if(x.value(j * pool[1] + l, i * pool[0] + k) > maxVal) {
+						maxVal = x.value(j * pool[1] + l, i * pool[0] + k);
+						xMax = j * pool[1] + l;
+						yMax = i * pool[0] + k;
 					}
 
 				}
 			}
 
 			// Assigning values for result and derivative
-			res(i, j) = maxVal;
+			res(j, i) = maxVal;
 			dx(xMax, yMax) = 1.0;
 
 		}
@@ -412,10 +412,7 @@ ts::Tensor<T> ts::vertCat(const std::vector<ts::Tensor<T>> &x) {
 
 	for(unsigned i=0; i<x.size(); i++) {
 
-		if(
-			x[i].value.cols() != width ||
-			x[i].wList != x[0].wList
-		) {
+		if(x[i].value.cols() != width || x[i].wList != x[0].wList) {
 			return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), NULL);
 		}
 
@@ -490,9 +487,10 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::increment
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
 	mat.setZero(size[0], size[1]);
 
-	for(unsigned i=0; i<size[0]; i++) {
-		for(unsigned j=0; j<size[1]; j++) {
-			mat(i, j) = childDerivative(i * size[1] + j, 0);
+	#pragma omp parallel for
+	for(unsigned i=0; i<size[1]; i++) {
+		for(unsigned j=0; j<size[0]; j++) {
+			mat(j, i) = childDerivative(j * size[1] + i, 0);
 		}
 	}
 
@@ -513,20 +511,17 @@ ts::Tensor<T> ts::flattening(const ts::Tensor<T> &x) {
 
 
 	// Set res vector
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
-	res.setZero(x.value.rows() * x.value.cols(), 1);
-
-	for(unsigned i=0; i<x.value.rows(); i++) {
-		for(unsigned j=0; j<x.value.cols(); j++) {
-			res(i * x.value.cols() + j, 0) = x.value(i, j);
-		}
-	}
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> res = x.value;
+	res = Eigen::Map<Eigen::Array<T, -1, 1>>(
+		res.data(), res.cols() * res.rows()
+	);
 
 
 	// Set dx matrix
 	// It should be 1-filled since we're keeping all values of x in res, but
 	// storing the full matrix would not be memory-efficient
 	Eigen::Array<T, 0, 0> dx;
+
 
 	// Return
 	std::shared_ptr<ts::Node<T>> nodePtr (

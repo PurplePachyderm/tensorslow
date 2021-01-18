@@ -97,6 +97,7 @@ public:
 	MultiLayerPerceptron(unsigned inputSize, std::vector<unsigned> layers);
 
 	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
+	ts::Tensor<T> (*finalActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> biases = {};
@@ -126,7 +127,8 @@ public:
 		std::vector<unsigned> denseLayers
 	);
 
-	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
+	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
+	ts::Tensor<T> (*denseActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 
 	std::vector<unsigned> expectedInput;
