@@ -204,7 +204,7 @@ ts::Tensor<T> ts::relu(const ts::Tensor<T> &x) {
 	for(unsigned i=0; i<res.cols(); i++) {
 		for(unsigned j=0; j<res.rows(); j++) {
 			res(j, i) =  (res(j,i) < 0) ? 0 : res(j, i);
-			dx(j, i) =  (res(j,i) < 0) ? 0 : 1.0;
+			dx(j, i) =  (res(j,i) != 0) ? 1.0 : 0;
 		}
 	}
 
