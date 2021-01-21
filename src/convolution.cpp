@@ -338,6 +338,143 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 
+// Splitting
+
+template <typename T>
+ts::SplitNode<T>::SplitNode(
+	std::vector<long> shape,
+	int xDep,
+	std::vector<long> originalShape,
+	ChannelSplit newSplitDirection,
+	unsigned newPosition
+) {
+	// SplitNode specific constructor to store the split direction
+
+	this->dependencies =  {xDep};
+
+	// New tensor shape (dimension of split matrices)
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	// Original matrix shape
+	originalRows = originalShape[0];
+	originalCols = originalShape[1];
+
+
+	splitDirection = newSplitDirection;
+	position = newPosition;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::SplitNode<T>::incrementGradient(
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+	unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
+	// for a matrix split.
+
+	// childDerivative is one of the resulting matrices. We will reconstruct
+	// the partial derivative with regard to this considered matrix in order to
+	// compute the increment. Index of the corresponding matrix is given by j.
+
+	// Shape of base matrix derivative (initally zero filled)
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> increment;
+	increment.setZero(originalRows, originalCols);
+
+	// Affect childDerivative values to correct positions, according to
+	// split direction & matrix index (j)
+	if(splitDirection == ChannelSplit::SPLIT_VERT) {
+		increment.block(0, position * this->cols, this->rows, this->cols) =
+		childDerivative;
+	}
+
+	else if(splitDirection == ChannelSplit::SPLIT_HOR) {
+		increment.block(position * this->rows, 0, this->rows, this->cols) =
+		childDerivative;
+	}
+
+	return increment;
+}
+
+
+
+template <typename T>
+std::vector<ts::Tensor<T>> ts::split(
+	const ts::Tensor<T> &x,
+	ChannelSplit channelSplit,
+	unsigned nInputChannels
+) {
+
+	// The gradient will have to be computed for a scalar
+	x.wList->elementWiseOnly = false;
+
+	std::vector<ts::Tensor<T>> matrices = {};
+
+	if(channelSplit == ChannelSplit::SPLIT_HOR) {
+		unsigned channelSize = x.value.rows() / nInputChannels;
+
+		for(unsigned i=0; i<nInputChannels; i++) {
+
+			// Get matrix form of block
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
+			x.value.block(
+				i * channelSize, 0, channelSize, x.value.cols()
+			);
+
+			// Create associated Tensor
+			std::shared_ptr<ts::Node<T>> nodePtr (
+				new ts::SplitNode<T>(
+					{channelSize, x.value.cols()},
+					x.index,
+					{x.value.rows(), x.value.cols()},
+					channelSplit,
+					i
+				)
+			);
+
+			matrices.push_back(ts::Tensor<T>(tmp, x.wList, nodePtr));
+		}
+	}
+
+	if(channelSplit == ChannelSplit::SPLIT_VERT) {
+		unsigned channelSize = x.value.cols() / nInputChannels;
+
+		for(unsigned i=0; i<nInputChannels; i++) {
+
+			// Get matrix form of block
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
+			x.value.block(
+				0, i * channelSize, x.value.rows(), channelSize
+			);
+
+			// Create associated Tensor
+			std::shared_ptr<ts::Node<T>> nodePtr (
+				new ts::SplitNode<T>(
+					{x.value.rows(), channelSize},
+					x.index,
+					{x.value.rows(), x.value.cols()},
+					channelSplit,
+					i
+				)
+			);
+
+			matrices.push_back(ts::Tensor<T>(tmp, x.wList, nodePtr));
+
+		}
+	}
+
+	if(channelSplit == ChannelSplit::NOSPLIT) {
+		matrices.push_back(x);
+	}
+
+	return matrices;
+}
+
+
+
 // Vertical concatenation
 
 template <typename T>

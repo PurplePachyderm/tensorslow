@@ -265,7 +265,7 @@ void ts::MultiLayerPerceptron<T>::load(std::string filePath) {
 template <typename T>
 ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	std::vector<unsigned> inputSize,
-	ts::ChannelSplit splitDirection, unsigned inputChannels,
+	ChannelSplit splitDirection, unsigned inputChannels,
 	std::vector<std::vector<unsigned>> convLayers,
 	std::vector<std::vector<unsigned>> poolingLayers,
 	std::vector<unsigned> denseLayers
@@ -300,7 +300,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	// Make sure channel splitting is possible
 
 	// Splitting rows
-	if(splitDirection == ts::SPLIT_HOR) {
+	if(splitDirection == ChannelSplit::SPLIT_HOR) {
 		if(
 			inputSize[0] % inputChannels != 0 ||
 			inputSize[0] < inputChannels
@@ -314,7 +314,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	}
 
 	// Splitting cols
-	if(splitDirection == ts::SPLIT_VERT) {
+	if(splitDirection == ChannelSplit::SPLIT_VERT) {
 		if(
 			inputSize[1] % inputChannels != 0 ||
 			inputSize[1] < inputChannels
@@ -437,7 +437,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		);
 
 		// Add layer i biases
-		biases.push_back(ts::Tensor<T>(
+		fullBiases.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
 			.setRandom(denseLayers[i], 1),
 			&(this->wList))
@@ -453,7 +453,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 
 template <typename T>
 void ts::ConvolutionalNetwork<T>::toggleGlobalOptimize(bool enable) {
-	if(weights.size() != biases.size()) {
+	if(weights.size() != fullBiases.size()) {
 		return;
 	}
 
@@ -467,7 +467,7 @@ void ts::ConvolutionalNetwork<T>::toggleGlobalOptimize(bool enable) {
 
 	for(unsigned i=0; i<weights.size(); i++) {
 		this->toggleOptimize(&(weights[i]), enable);
-		this->toggleOptimize(&(biases[i]), enable);
+		this->toggleOptimize(&(fullBiases[i]), enable);
 	}
 }
 
@@ -497,39 +497,11 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	std::vector<ts::Tensor<T>> inputVec = {};
 
-	if(channelSplit == SPLIT_HOR) {
-		unsigned channelSize = input.getValue().rows() / nInputChannels;
-		for(unsigned i=0; i<nInputChannels; i++) {
 
-			// Get matrix form of block
-			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
-			input.getValue().block(
-				i * channelSize, 0, channelSize, input.getValue().cols()
-			);
-
-			// Create associated Tensor
-			inputVec.push_back(ts::Tensor<T>(tmp,&(this->wList)));
-
-		}
+	if(channelSplit != ChannelSplit::NOSPLIT) {
+		inputVec = ts::split(input, channelSplit, nInputChannels);
 	}
-
-	if(channelSplit == SPLIT_VERT) {
-		unsigned channelSize = input.getValue().cols() / nInputChannels;
-		for(unsigned i=0; i<nInputChannels; i++) {
-
-			// Get matrix form of block
-			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
-			input.getValue().block(
-				0, i * channelSize, input.getValue().rows(), channelSize
-			);
-
-			// Create associated Tensor
-			inputVec.push_back(ts::Tensor<T>(tmp,&(this->wList)));
-
-		}
-	}
-
-	if(channelSplit == NOSPLIT) {
+	else {
 		inputVec.push_back(input);
 	}
 
@@ -550,9 +522,11 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 			// For each input channel ...
 			// (add other elements)
 			for(unsigned k=1; k<convKernels[i][j].size(); k++) {
+				// ... compute a convolution
 				inputVec[j] = inputVec[j] + ts::convolution(tmp[k], convKernels[i][j][k]);
 			}
 
+			// TODO Add biases !
 
 			// A pooling layer of size 0 means we want to skip it
 			if(pooling[i][0] != 0 || pooling[i][1] != 0) {
@@ -573,7 +547,7 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	// 3) Dense layers computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
-		input = (*denseActivation)(matProd(weights[i], input) + biases[i]);
+		input = (*denseActivation)(matProd(weights[i], input) + fullBiases[i]);
 	}
 
 
@@ -598,7 +572,7 @@ void ts::ConvolutionalNetwork<T>::save(std::string filePath) {
 	}
 
 	out << ts::serializeTensorsVector(weights);
-	out << ts::serializeTensorsVector(biases);
+	out << ts::serializeTensorsVector(fullBiases);
 
 	out.close();
 }
@@ -610,7 +584,7 @@ void ts::ConvolutionalNetwork<T>::load(std::string filePath) {
 	// Delete current tensors and reset wList
 	convKernels = {};
 	weights = {};
-	biases = {};
+	fullBiases = {};
 	this->wList.reset();
 
 	// Load new tensors
@@ -640,7 +614,7 @@ void ts::ConvolutionalNetwork<T>::load(std::string filePath) {
 
 
 	weights = ts::parseTensorsVector(in, &(this->wList));
-	biases = ts::parseTensorsVector(in, &(this->wList));
+	fullBiases = ts::parseTensorsVector(in, &(this->wList));
 
 
 	in.close();

@@ -132,9 +132,64 @@ TEST(Convolution, MaxPooling) {
 
 
 
+TEST(Convolution, Split) {
+
+	ts::WengertList<float> wList;
+
+	Eigen::Array<float, 6, 3> x_;
+	x_ <<
+	1, 2, 3,
+	4, 5, 6,
+	7, 8, 9,
+	10, 11, 12,
+	13, 14, 15,
+	16, 17, 18;
+	ts::Tensor<float> x = ts::Tensor<float>(x_, &wList);
+
+	std::vector<ts::Tensor<float>> resVec = ts::split(x, ts::ChannelSplit::SPLIT_HOR, 2);
+	ts::Tensor<float> res = resVec[0] + resVec[1];
+
+	// Make sure that base result is correct
+
+	Eigen::Array<float, 3, 3> expectedRes;
+	expectedRes <<
+	11, 13, 15,
+	17, 19, 21,
+	23, 25, 27;
+
+	for(unsigned i=0; i<3; i++) {
+		for(unsigned j=0; j<3; j++) {
+			EXPECT_EQ(expectedRes(i, j), res.getValue()(i, j));
+		}
+	}
+
+
+	// Get norm & its derivative
+
+	res = ts::squaredNorm(res);
+	ts::Gradient<float> gradient = res.grad();
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> dx = gradient.getValue(x);
+
+	Eigen::Array<float, 6, 3> expectedDx;
+	expectedDx <<
+	22, 26, 30,
+	34, 38, 42,
+	46, 50, 54,
+	22, 26, 30,
+	34, 38, 42,
+	46, 50, 54;
+
+	for(unsigned i=0; i<6; i++) {
+		for(unsigned j=0; j<3; j++) {
+			EXPECT_EQ(expectedDx(i, j), dx(i, j));
+		}
+	}
+
+}
+
+
+
 TEST(Convolution, VerticalConcatenation) {
-	// We'll create a simple 6*9 matrix, and try a max pooling with a 3*3
-	// pool size.
 
 	ts::WengertList<float> wList;
 
@@ -226,7 +281,7 @@ TEST(Convolution, FullCNN) {
 		{10, 10},
 
 		// Input channels
-		ts::NOSPLIT, 1,
+		ts::ChannelSplit::NOSPLIT, 1,
 
 		// Convolution / pooling (we'll manually add it later)
 		{},

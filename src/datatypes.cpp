@@ -87,6 +87,10 @@ template class ts::PoolingNode<float>;
 template ts::Tensor<float> ts::maxPooling(
 	const ts::Tensor<float> &x, std::vector<unsigned> pool
 );
+template class ts::SplitNode<float>;
+template std::vector<ts::Tensor<float>> ts::split(
+	const ts::Tensor<float> &x, ChannelSplit channelSplit, unsigned nInputChannels
+);
 template class ts::VertCatNode<float>;
 template ts::Tensor<float> ts::vertCat<float>(
 	const std::vector<ts::Tensor<float>> &x
@@ -161,6 +165,10 @@ template ts::Tensor<double> ts::convolution(
 template class ts::PoolingNode<double>;
 template ts::Tensor<double> ts::maxPooling(
 	const ts::Tensor<double> &x, std::vector<unsigned> pool
+);
+template class ts::SplitNode<double>;
+template std::vector<ts::Tensor<double>> ts::split(
+	const ts::Tensor<double> &x, ChannelSplit channelSplit, unsigned nInputChannels
 );
 template class ts::VertCatNode<double>;
 template ts::Tensor<double> ts::vertCat<double>(

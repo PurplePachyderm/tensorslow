@@ -8,6 +8,7 @@
 
 #include "autodiff.hpp"
 #include "serializer.hpp"
+#include "convolution.hpp"
 
 #include <string>
 #include <fstream>
@@ -22,13 +23,6 @@ namespace ts {
 
 	// Friends forward declaration
 	template <typename T> class GradientAccumulator;
-
-	// Enum for channel splitting directions in CNN
-	enum ChannelSplit {
-		NOSPLIT,
-		SPLIT_HOR,	// Splits lines
-		SPLIT_VERT	// Splits columns
-	};
 }
 
 
@@ -121,7 +115,7 @@ private:
 public:
 	ConvolutionalNetwork(
 		std::vector<unsigned> inputSize,
-		ts::ChannelSplit splitDirection, unsigned inputChannels,
+		ChannelSplit splitDirection, unsigned inputChannels,
 		std::vector<std::vector<unsigned>> convLayers,
 		std::vector<std::vector<unsigned>> poolingLayers,
 		std::vector<unsigned> denseLayers
@@ -136,11 +130,14 @@ public:
 	// 1st dim : layers / 2nd dim : output channels / 3rd dim : input channels
 	std::vector<std::vector<std::vector<ts::Tensor<T>>>> convKernels = {};
 
+	// TODO convBiases init in constructor
+	std::vector<ts::Tensor<T>> convBiases = {};
+
 	std::vector<std::vector<unsigned>> pooling;
 	std::vector<ts::Tensor<T>> weights = {};
-	std::vector<ts::Tensor<T>> biases = {};
+	std::vector<ts::Tensor<T>> fullBiases = {};
 
-	ts::ChannelSplit channelSplit = NOSPLIT;
+	ChannelSplit channelSplit = ChannelSplit::NOSPLIT;
 	unsigned nInputChannels = 1;
 
 	void toggleGlobalOptimize(bool enable);

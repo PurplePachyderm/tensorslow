@@ -59,11 +59,20 @@ namespace ts {
 	template <typename T> class GradientAccumulator;
 	template <typename T> class AdamOptimizer;
 
+	enum class ChannelSplit : int;
+
 	template <typename T>
 	ts::Tensor<T> convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 
 	template <typename T>
 	ts::Tensor<T> maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+
+	template <typename T>
+	std::vector<ts::Tensor<T>> split(
+		const ts::Tensor<T> &x,
+		ChannelSplit channelSplit,
+		unsigned nInputChannels
+	);
 
 	template <typename T>
 	ts::Tensor<T> vertCat(const std::vector<ts::Tensor<T>> &x);
@@ -129,6 +138,11 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend std::vector<ts::Tensor<T>> split<>(
+		const ts::Tensor<T> &x,
+		ChannelSplit channelSplit,
+		unsigned nInputChannels
+	);
 	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 
@@ -238,6 +252,11 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend std::vector<ts::Tensor<T>> split<>(
+		const ts::Tensor<T> &x,
+		ChannelSplit channelSplit,
+		unsigned nInputChannels
+	);
 	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };
@@ -294,6 +313,11 @@ public:
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
 	friend ts::Tensor<T> maxPooling<>(const ts::Tensor<T> &x, std::vector<unsigned> pool);
+	friend std::vector<ts::Tensor<T>> split<>(
+		const ts::Tensor<T> &x,
+		ChannelSplit channelSplit,
+		unsigned nInputChannels
+	);
 	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
 };

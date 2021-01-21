@@ -218,7 +218,7 @@ int main(void) {
 		{IMAGE_HEIGHT, IMAGE_WIDTH},
 
 		// Number of channels for input (3 for RGB)
-		ts::SPLIT_HOR, 3,
+		ts::ChannelSplit::SPLIT_HOR, 3,
 
 		// Convolution / pooling
 		{{3, 3, 32}, {4, 4, 64}, {3, 3, 64}},

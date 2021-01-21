@@ -14,6 +14,14 @@
 
 #include <Eigen/Dense>
 
+// Enum for channel splitting directions in CNN
+// (declared outside for now because scoped enum declarationb seems
+// impossible)
+enum class ts::ChannelSplit : int {
+	NOSPLIT,
+	SPLIT_HOR,	// Splits lines
+	SPLIT_VERT	// Splits columns
+};
 
 
 namespace ts {
@@ -32,6 +40,14 @@ namespace ts {
 	template <typename T> class ConvolutionNode;
 	template <typename T>
 	ts::Tensor<T> convolution(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
+
+	template <typename T> class SplitNode;
+	template <typename T>
+	std::vector<ts::Tensor<T>> split(
+		const ts::Tensor<T> &x,
+		ChannelSplit channelSplit,
+		unsigned nInputChannels
+	);
 
 	template <typename T> class PoolingNode;
 	template <typename T>
@@ -85,6 +101,39 @@ private:
 
 	friend ts::Tensor<T> ts::maxPooling<>(
 		const ts::Tensor<T> &x, std::vector<unsigned> pool
+	);
+};
+
+
+
+	// ts::SplitNode
+
+template <typename T>
+class ts::SplitNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	SplitNode(
+		std::vector<long> shape,
+		int xDep,
+		std::vector<long> originalShape,
+		ChannelSplit newSplitDirection,
+		unsigned newPosition
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+
+	long originalRows, originalCols;
+	ChannelSplit splitDirection;
+	unsigned position;
+
+	friend std::vector<ts::Tensor<T>> ts::split<>(
+		const ts::Tensor<T> &x,
+		ChannelSplit channelSplit,
+		unsigned nInputChannels
 	);
 };
 
