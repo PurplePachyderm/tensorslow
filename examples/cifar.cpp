@@ -167,7 +167,7 @@ int main(void) {
 	omp_set_num_threads(4);
 
 	unsigned batchSize = 5;
-	unsigned nBatches = 1000;
+	unsigned nBatches = 500;
 	unsigned nEpochs = 3;
 
 	unsigned nTests = 100;
@@ -221,11 +221,11 @@ int main(void) {
 		ts::ChannelSplit::SPLIT_HOR, 3,
 
 		// Convolution / pooling
-		{{3, 3, 32}, {4, 4, 64}, {3, 3, 64}},
-		{{2,2}, {2,2}, {0, 0}},
+		{{3, 3, 16}, {3, 3, 32}, {3, 3, 32}, {3, 3, 64}},
+		{{0,0}, {2,2}, {0,0}, {2, 2}},
 
 		// Dense layers (with output vector & not including first layer)
-		{1024, 64, N_CLASSES}
+		{1024, 512, 64, N_CLASSES}
 	);
 
 	model.toggleGlobalOptimize(true);

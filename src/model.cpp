@@ -276,6 +276,8 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	// fullLayers: sizes of fully connected layers
 
 
+	std::vector<std::vector<int>> convBiasesSizes = {};
+
 		// Validate dimensions of network
 
 	if(inputSize.size() != 2) {
@@ -361,6 +363,10 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		intermediarySize[1] = intermediarySize[1] - convLayers[i][1] + 1;
 
 
+		// Save intermediary for convBiases
+		convBiasesSizes.push_back(intermediarySize);
+
+
 		if(intermediarySize[0] <= 0 || intermediarySize[1] <= 0) {
 			std::cout << "ERROR: Convolution layer " << i <<
 			" is impossible" << std::endl;
@@ -396,14 +402,22 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	convLayers.insert(convLayers.begin(), {0, 0, inputChannels});
 
 	convKernels = {};
+	convBiases = {};
 
 	// For each layer ...
 	for(unsigned i=1; i<convLayers.size(); i++) {
 
 		convKernels.push_back({});
+		convBiases.push_back({});
 
 		// For each output ...
 		for(unsigned j=0; j<convLayers[i][2]; j++) {
+
+			convBiases[i-1].push_back(ts::Tensor<T>(
+				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
+				.setRandom(convBiasesSizes[i-1][0], convBiasesSizes[i-1][1]),
+				&(this->wList))
+			);
 
 			convKernels[i-1].push_back({});
 
@@ -413,7 +427,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 				// ... add a conv kernel
 				convKernels[i-1][j].push_back(ts::Tensor<T>(
 					Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-					.setRandom(convLayers[i][0], convLayers[i][1]),
+					.setRandom(convLayers[i][0], convLayers[i][1]) / convLayers[i-1][2],
 					&(this->wList))
 				);
 
@@ -439,7 +453,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		// Add layer i biases
 		fullBiases.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-			.setRandom(denseLayers[i], 1),
+			.setZero(denseLayers[i], 1),
 			&(this->wList))
 		);
 	}
@@ -459,6 +473,7 @@ void ts::ConvolutionalNetwork<T>::toggleGlobalOptimize(bool enable) {
 
 	for(unsigned i=0; i<convKernels.size(); i++) {
 		for(unsigned j=0; j<convKernels[i].size(); j++) {
+			this->toggleOptimize(&(convBiases[i][j]), enable);
 			for(unsigned k=0; k<convKernels[i][j].size(); k++) {
 				this->toggleOptimize(&(convKernels[i][j][k]), enable);
 			}
@@ -497,7 +512,6 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	std::vector<ts::Tensor<T>> inputVec = {};
 
-
 	if(channelSplit != ChannelSplit::NOSPLIT) {
 		inputVec = ts::split(input, channelSplit, nInputChannels);
 	}
@@ -526,7 +540,7 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 				inputVec[j] = inputVec[j] + ts::convolution(tmp[k], convKernels[i][j][k]);
 			}
 
-			// TODO Add biases !
+			inputVec[j] = inputVec[j] + convBiases[i][j];
 
 			// A pooling layer of size 0 means we want to skip it
 			if(pooling[i][0] != 0 || pooling[i][1] != 0) {
@@ -543,6 +557,9 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	// and flatten convolution outputs
 	input = vertCat(inputVec);
 	input = flattening(input);
+
+	// This should scale values in [0, 1] (if a function such as sigmoid is choosed)
+	input = (*denseActivation)(input);
 
 
 	// 3) Dense layers computation loop

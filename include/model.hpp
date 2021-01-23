@@ -121,7 +121,7 @@ public:
 		std::vector<unsigned> denseLayers
 	);
 
-	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
+	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::leakyRelu);
 	ts::Tensor<T> (*denseActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 
@@ -130,8 +130,7 @@ public:
 	// 1st dim : layers / 2nd dim : output channels / 3rd dim : input channels
 	std::vector<std::vector<std::vector<ts::Tensor<T>>>> convKernels = {};
 
-	// TODO convBiases init in constructor
-	std::vector<ts::Tensor<T>> convBiases = {};
+	std::vector<std::vector<ts::Tensor<T>>> convBiases = {};
 
 	std::vector<std::vector<unsigned>> pooling;
 	std::vector<ts::Tensor<T>> weights = {};
