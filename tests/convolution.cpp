@@ -310,14 +310,28 @@ TEST(Convolution, FullCNN) {
 	-0.0070, -0.1583,  0.2241,
 	0.2955, -0.0712, -0.2202;
 
-	std::vector< std::vector< ts::Tensor<float> >> kernels = {
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> biases;
+	biases.setZero(8, 8);
+
+	std::vector< std::vector< ts::Tensor<float> >> convKernels = {
 		{ts::Tensor<float>(ker1, &(model.wList))},
 		{ts::Tensor<float>(ker2, &(model.wList))},
 		{ts::Tensor<float>(ker3, &(model.wList))}
 	};
 
-	model.convKernels = {kernels};
+	std::vector<ts::Tensor<float>> convBiases = {
+		ts::Tensor<float>(biases, &(model.wList)),
+		ts::Tensor<float>(biases, &(model.wList)),
+		ts::Tensor<float>(biases, &(model.wList))
+	};
+
+
+	model.convKernels = {convKernels};
+	model.convBiases = {convBiases};
 	model.pooling = {{2, 2}};
+	model.convActivation = &(ts::sigmoid);
+	model.denseActivation = &(ts::sigmoid);
+
 	model.toggleGlobalOptimize(true);
 
 
@@ -339,8 +353,8 @@ TEST(Convolution, FullCNN) {
 
 
 	// Make sure output is correct
-	Eigen::Array<float, 48, 1> expectedOutput;
-	expectedOutput <<
+	Eigen::Array<float, 48, 1> expectedOutput_;
+	expectedOutput_ <<
 	0.4573, 0.4428, 0.5253, 0.4627, 0.5099, 0.4610, 0.4686, 0.4944, 0.4394,
 	0.4417, 0.5059, 0.4612, 0.4833, 0.4834, 0.4877, 0.4957, 0.5275, 0.4570,
 	0.5246, 0.5360, 0.5661, 0.4956, 0.4565, 0.5216, 0.5343, 0.5160, 0.5375,
@@ -348,8 +362,11 @@ TEST(Convolution, FullCNN) {
 	0.5749, 0.5934, 0.5660, 0.5702, 0.6243, 0.5796, 0.5819, 0.5883, 0.5428,
 	0.5575, 0.5701, 0.5671;
 
+	ts::Tensor<float> expectedOutput = ts::Tensor<float>(expectedOutput_, &(model.wList));
+	expectedOutput = rescale(expectedOutput);
+
 	for(unsigned i=0; i<48; i++) {
-		ASSERT_NEAR(output.getValue()(i, 0), expectedOutput(i, 0), 0.001);
+		ASSERT_NEAR(output.getValue()(i, 0), expectedOutput.getValue()(i, 0), 0.001);
 	}
 
 	// Get gradient
