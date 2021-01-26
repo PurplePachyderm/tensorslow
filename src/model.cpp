@@ -415,7 +415,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 
 			convBiases[i-1].push_back(ts::Tensor<T>(
 				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-				.setRandom(convBiasesSizes[i-1][0], convBiasesSizes[i-1][1]),
+				.setZero(convBiasesSizes[i-1][0], convBiasesSizes[i-1][1]),
 				&(this->wList))
 			);
 
@@ -424,10 +424,13 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 			// For each input ...
 			for(unsigned k=0; k<convLayers[i-1][2]; k++) {
 
+				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
+				tmp.setRandom(convLayers[i][0], convLayers[i][1]);
+				tmp = tmp / 5.0f;
+
 				// ... add a conv kernel
 				convKernels[i-1][j].push_back(ts::Tensor<T>(
-					Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-					.setRandom(convLayers[i][0], convLayers[i][1]) / convLayers[i-1][2],
+					tmp,
 					&(this->wList))
 				);
 
@@ -506,9 +509,6 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	// Convert input to 2D vector (for number of channels) for use with the
 	// im2col method. This should be a faster way to compute convolutions.
-	// NOTE We probably don't need to define an operation with derivative,
-	// since we won't be interested in the derivative with respect to the
-	// input in a realistic situation
 
 	std::vector<ts::Tensor<T>> inputVec = {};
 
@@ -558,17 +558,13 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	input = vertCat(inputVec);
 	input = flattening(input);
 
-	// This should scale values in [0, 1] (if a function such as sigmoid is choosed)
-	input = (*denseActivation)(input);
-
 
 	// 3) Dense layers computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
 		input = (*denseActivation)(matProd(weights[i], input) + fullBiases[i]);
 	}
 
-
-	return input;
+	return rescale(input);
 }
 
 

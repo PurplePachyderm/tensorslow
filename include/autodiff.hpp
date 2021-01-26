@@ -53,6 +53,8 @@ namespace ts {
 	template <typename T>
 	ts::Tensor<T> leakyRelu(const ts::Tensor<T> &x);
 	template <typename T>
+	ts::Tensor<T> rescale(const ts::Tensor<T> &x);
+	template <typename T>
 	ts::Tensor<T> squaredNorm(const ts::Tensor<T> &x);
 
 
@@ -138,6 +140,7 @@ public:
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> relu<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> leakyRelu<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> rescale<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
@@ -253,6 +256,7 @@ public:
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> relu<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> leakyRelu<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> rescale<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);
@@ -315,6 +319,7 @@ public:
 	friend ts::Tensor<T> sigmoid<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> relu<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> leakyRelu<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> rescale<>(const ts::Tensor<T> &x);
 	friend ts::Tensor<T> squaredNorm<>(const ts::Tensor<T> &x);
 
 	friend ts::Tensor<T> convolution<>(const ts::Tensor<T> &mat, const ts::Tensor<T> &ker);

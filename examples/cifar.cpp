@@ -167,7 +167,7 @@ int main(void) {
 	omp_set_num_threads(4);
 
 	unsigned batchSize = 5;
-	unsigned nBatches = 500;
+	unsigned nBatches = 100;
 	unsigned nEpochs = 3;
 
 	unsigned nTests = 100;

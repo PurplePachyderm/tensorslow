@@ -121,8 +121,8 @@ public:
 		std::vector<unsigned> denseLayers
 	);
 
-	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::leakyRelu);
-	ts::Tensor<T> (*denseActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
+	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::relu);
+	ts::Tensor<T> (*denseActivation)(const ts::Tensor<T>&) = &(ts::relu);
 
 
 	std::vector<unsigned> expectedInput;

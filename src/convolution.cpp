@@ -16,10 +16,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
 ) {
 
-	// This is a basic and slow implementation of convolution. It is not used
-	// anymore in our CNN model. For a more efficient version, see the im2col
-	// version.
-
 	// Make sure kernel is smaller
 	if(
 		mat.rows() < ker.rows() ||
@@ -54,10 +50,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
 	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
 	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
 ) {
-
-	// This is a version of convolution using the im2col approach.
-	// Even though this method is considered more
-	// computationally efficient, it requires more memory.
 
 	// Make sure ker is smaller than mat
 	if(mat.rows() < ker.rows() || mat.cols() < ker.cols()) {
@@ -542,7 +534,7 @@ ts::Tensor<T> ts::vertCat(const std::vector<ts::Tensor<T>> &x) {
 	// Compute size of resulting matrix, and storing each input matrix position
 	// We will also make sure that all matrices have the same width / wList
 
-	std::vector<long> heights = {0}; // WARNING Values are cumulative starting heights
+	std::vector<long> heights = {0}; // Values are cumulative starting heights
 	long height = 0;
 	long width = x[0].value.cols();
 	std::vector<int> dependencies = {};

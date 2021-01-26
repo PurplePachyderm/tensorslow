@@ -239,11 +239,40 @@ ts::Tensor<T> ts::leakyRelu(const ts::Tensor<T> &x) {
 	#pragma omp parallel for
 	for(unsigned i=0; i<res.cols(); i++) {
 		for(unsigned j=0; j<res.rows(); j++) {
-			res(j, i) =  (res(j,i) < 0) ? 0.1 : res(j, i);
+			res(j, i) =  (res(j,i) < 0) ? 0.1 * res(j, i) : res(j, i);
 			dx(j, i) =  (res(j,i) != 0) ? 1.0 : 0.1;
 		}
 	}
 
+
+	// Return value
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::ElementWiseNode<T>(
+			{x.value.rows(), x.value.cols()},
+			dx, x.index
+		)
+	);
+
+	return ts::Tensor<T>(res, x.wList, nodePtr);
+
+}
+
+
+
+template <typename T>
+ts::Tensor<T> ts::rescale(const ts::Tensor<T> &x) {
+	// Rescales tensor to 1
+	// a = a / max(a)
+	// da / dx = 1 / max(a)
+	// Output is then rescaled between 0 and 1
+
+
+	T max = x.value.maxCoeff();
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = x.value / max;
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx;
+	dx.setZero(x.value.rows(), x.value.cols());
+	dx = dx + max;
 
 	// Return value
 	std::shared_ptr<ts::Node<T>> nodePtr (

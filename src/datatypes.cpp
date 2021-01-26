@@ -46,6 +46,7 @@ template ts::Tensor<float> ts::matProd(const ts::Tensor<float> &x, const ts::Ten
 template ts::Tensor<float> ts::sigmoid(const ts::Tensor<float> &x);
 template ts::Tensor<float> ts::relu(const ts::Tensor<float> &x);
 template ts::Tensor<float> ts::leakyRelu(const ts::Tensor<float> &x);
+template ts::Tensor<float> ts::rescale(const ts::Tensor<float> &x);
 template ts::Tensor<float> ts::squaredNorm(const ts::Tensor<float> &x);
 
 
@@ -127,6 +128,7 @@ template ts::Tensor<double> ts::matProd(const ts::Tensor<double> &x, const ts::T
 template ts::Tensor<double> ts::sigmoid(const ts::Tensor<double> &x);
 template ts::Tensor<double> ts::relu(const ts::Tensor<double> &x);
 template ts::Tensor<double> ts::leakyRelu(const ts::Tensor<double> &x);
+template ts::Tensor<double> ts::rescale(const ts::Tensor<double> &x);
 template ts::Tensor<double> ts::squaredNorm(const ts::Tensor<double> &x);
 
 template class ts::Model<double>;
