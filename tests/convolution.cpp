@@ -362,9 +362,67 @@ TEST(Convolution, Im2Col) {
 			ASSERT_EQ(dx3(i,j), expectedDx3(i,j));
 		}
 	}
+}
 
 
 
+TEST(Convolution, Col2Im) {
+
+	ts::WengertList<float> wList;
+
+	Eigen::Array<float, 3, 4> x_;
+	x_ <<
+	1,  2,  3,  4,
+	5,  6,  7,  8,
+	9, 10, 11, 12;
+
+	ts::Tensor<float> x = ts::Tensor<float>(x_, &wList);
+	std::vector<ts::Tensor<float>> res = ts::col2im(x, {2, 2});
+	ts::Tensor<float> norm = ts::squaredNorm(ts::vertCat(res));
+
+	ts::Gradient<float> grad = norm.grad();
+	Eigen::Array<float, 3, 4> dx = grad.getValue(x);
+
+
+	// Check result
+	Eigen::Array<float, 2, 2> expectedX1;
+	expectedX1 <<
+	1,  2,
+	3,  4;
+
+
+	Eigen::Array<float, 2, 2> expectedX2;
+	expectedX2 <<
+	5,  6,
+	7,  8;
+
+	Eigen::Array<float, 2, 2> expectedX3;
+	expectedX3 <<
+	 9,  10,
+	11,  12;
+
+	for(unsigned i=0; i<2; i++) {
+		for(unsigned j=0; j<2; j++) {
+			ASSERT_EQ(res[0].getValue()(i,j), expectedX1(i,j));
+			ASSERT_EQ(res[1].getValue()(i,j), expectedX2(i,j));
+			ASSERT_EQ(res[2].getValue()(i,j), expectedX3(i,j));
+		}
+	}
+
+
+	// Check derivatives
+
+	Eigen::Array<float, 3, 4> expectedDx;
+	expectedDx <<
+	 2,  4,  6,  8,
+	10, 12, 14, 16,
+	18, 20, 22, 24;
+
+	for(unsigned i=0; i<3; i++) {
+		for(unsigned j=0; j<4; j++) {
+			ASSERT_EQ(dx(i,j), expectedDx(i,j));
+		}
+	}
 }
 
 

@@ -789,16 +789,79 @@ ts::Tensor<T> ts::im2col(
 }
 
 
-// TODO
-// ts::Tensor<T> ts::col2im(
-// 	const std::vector<ts::Tensor<T>> &x,
-// 	std::vector<unsigned> outputDim
-// ) {
-// 	// Turns an im2col matrix into a channels vector
-// 	// The output can be reused in another im2col, or be
-// 	// flattened before dense layers.
-//
-//
-//
-// 	return res;
-// }
+	// Col2im
+
+template <typename T>
+ts::Col2ImNode<T>::Col2ImNode(
+	std::vector<long> shape,
+	int xDep,
+	unsigned newPosition,
+	long newNChannels
+) {
+	// New tensor shape (vector)
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	this->dependencies =  {xDep};
+
+	// Original matrix size
+	position = newPosition;
+	nChannels = newNChannels;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Col2ImNode<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+		unsigned &j
+) {
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> flat = childDerivative;
+	flat = Eigen::Map<Eigen::Array<T, 1, -1>>(
+		flat.data(), flat.cols() * flat.rows()
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
+	res.setZero(nChannels, flat.cols());
+	res.block(position, 0, 1, flat.cols()) = flat;
+
+	return res;
+}
+
+
+
+template <typename T>
+std::vector<ts::Tensor<T>> ts::col2im(
+	const ts::Tensor<T> &x,
+	std::vector<unsigned> outputDim
+) {
+	// Turns an im2col matrix into a channels vector
+	// The output can be reused in another im2col, or
+	// flattened before dense layers.
+
+	std::vector<ts::Tensor<T>> res = {};
+
+	// Each line contains some channel's coefficients in row-major order
+	for(unsigned i=0; i<x.value.rows(); i++) {
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> tmp =
+		x.value.block(i, 0, 1, x.value.cols());
+
+		tmp.resize(outputDim[0], outputDim[1]);
+
+
+		// COnvert it back to matrix form
+		std::shared_ptr<ts::Node<T>> nodePtr (
+			new ts::Col2ImNode<T>(
+				{tmp.rows(), tmp.cols()},
+				x.index,
+				i,
+				x.value.rows()
+			)
+		);
+
+		res.push_back(ts::Tensor<T>(tmp, x.wList, nodePtr));
+	}
+
+	return res;
+}

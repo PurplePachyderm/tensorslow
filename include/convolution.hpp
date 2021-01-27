@@ -67,6 +67,13 @@ namespace ts {
 		const std::vector<ts::Tensor<T>> &x,
 		std::vector<unsigned> kernelDim
 	);
+
+	template <typename T> class Col2ImNode;
+	template <typename T>
+	std::vector<ts::Tensor<T>> col2im(
+		const ts::Tensor<T> &x,
+		std::vector<unsigned> outputDim
+	);
 }
 
 
@@ -226,4 +233,35 @@ private:
 		const std::vector<ts::Tensor<T>> &x,
 		std::vector<unsigned> kernelDim
 	);
+};
+
+
+
+	// ts::Col2ImNode
+
+template <typename T>
+class ts::Col2ImNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	// This node can have n parents !
+	Col2ImNode(
+		std::vector<long> shape,
+		int xDep,
+		unsigned newPosition,
+		long newNChannels
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+
+	unsigned position;
+	unsigned nChannels;
+
+	friend std::vector<ts::Tensor<T>> ts::col2im<>(
+		const ts::Tensor<T> &x,
+		std::vector<unsigned> outputDim
+	) ;
 };

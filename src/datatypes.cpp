@@ -104,6 +104,11 @@ template ts::Tensor<float> ts::im2col<float>(
 	const std::vector<ts::Tensor<float>> &x,
 	std::vector<unsigned> kernelDim
 );
+template class ts::Col2ImNode<float>;
+template std::vector<ts::Tensor<float>> ts::col2im<float>(
+	const ts::Tensor<float> &x,
+	std::vector<unsigned> outputDim
+);
 
 
 
@@ -189,4 +194,9 @@ template class ts::Im2ColNode<double>;
 template ts::Tensor<double> ts::im2col<double>(
 	const std::vector<ts::Tensor<double>> &x,
 	std::vector<unsigned> kernelDim
+);
+template class ts::Col2ImNode<double>;
+template std::vector<ts::Tensor<double>> ts::col2im<double>(
+	const ts::Tensor<double> &x,
+	std::vector<unsigned> outputDim
 );
