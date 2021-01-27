@@ -84,6 +84,12 @@ namespace ts {
 
 	template <typename T>
 	ts::Tensor<T> flattening(const ts::Tensor<T> &x);
+
+	template <typename T>
+	ts::Tensor<T> im2col(
+		const std::vector<ts::Tensor<T>> &x,
+		std::vector<unsigned> kernelDim
+	);
 }
 
 
@@ -152,6 +158,10 @@ public:
 	);
 	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> im2col<>(
+		const std::vector<ts::Tensor<T>> &x,
+		std::vector<unsigned> kernelDim
+	);
 
 };
 
@@ -268,6 +278,10 @@ public:
 	);
 	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> im2col<>(
+		const std::vector<ts::Tensor<T>> &x,
+		std::vector<unsigned> kernelDim
+	);
 };
 
 
@@ -331,6 +345,10 @@ public:
 	);
 	friend ts::Tensor<T> vertCat<>(const std::vector<ts::Tensor<T>> &x);
 	friend ts::Tensor<T> flattening<>(const ts::Tensor<T> &x);
+	friend ts::Tensor<T> im2col<>(
+		const std::vector<ts::Tensor<T>> &x,
+		std::vector<unsigned> kernelDim
+	);
 };
 
 

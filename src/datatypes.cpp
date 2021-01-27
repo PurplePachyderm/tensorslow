@@ -99,6 +99,11 @@ template ts::Tensor<float> ts::vertCat<float>(
 );
 template class ts::FlatteningNode<float>;
 template ts::Tensor<float> ts::flattening<float>(const ts::Tensor<float> &x);
+template class ts::Im2ColNode<float>;
+template ts::Tensor<float> ts::im2col<float>(
+	const std::vector<ts::Tensor<float>> &x,
+	std::vector<unsigned> kernelDim
+);
 
 
 
@@ -180,3 +185,8 @@ template ts::Tensor<double> ts::vertCat<double>(
 );
 template class ts::FlatteningNode<double>;
 template ts::Tensor<double> ts::flattening<double>(const ts::Tensor<double> &x);
+template class ts::Im2ColNode<double>;
+template ts::Tensor<double> ts::im2col<double>(
+	const std::vector<ts::Tensor<double>> &x,
+	std::vector<unsigned> kernelDim
+);

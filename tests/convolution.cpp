@@ -272,6 +272,103 @@ TEST(Convolution, Flattening) {
 
 
 
+TEST(Convolution, Im2Col) {
+
+	ts::WengertList<float> wList;
+
+	Eigen::Array<float, 3, 3> x1_;
+	x1_ <<
+	1, 2, 3,
+	4, 5, 6,
+	7, 8, 9;
+
+	Eigen::Array<float, 3, 3> x2_;
+	x2_ <<
+	11, 12, 13,
+	14, 15, 16,
+	17, 18, 19;
+
+	Eigen::Array<float, 3, 3> x3_;
+	x3_ <<
+	21, 22, 23,
+	24, 25, 26,
+	27, 28, 29;
+
+	std::vector<ts::Tensor<float>> x = {
+		ts::Tensor<float>(x1_, &wList),
+		ts::Tensor<float>(x2_, &wList),
+		ts::Tensor<float>(x3_, &wList)
+	};
+
+
+	ts::Tensor<float> mat = ts::im2col(x, {2, 2});
+
+	ts::Tensor<float> norm = ts::squaredNorm(mat);
+
+	ts::Gradient<float> grad = norm.grad();
+
+	// Test im2col result
+	Eigen::Array<float, 12, 4> expected;
+	expected <<
+	1, 2, 4, 5,
+	4, 5, 7, 8,
+	2, 3, 5, 6,
+	5, 6, 8, 9,
+
+	11, 12, 14, 15,
+	14, 15, 17, 18,
+	12, 13, 15, 16,
+	15, 16, 18, 19,
+
+	21, 22, 24, 25,
+	24, 25, 27, 28,
+	22, 23, 25, 26,
+	25, 26, 28, 29;
+
+	for(unsigned i=0; i<12; i++) {
+		for(unsigned j=0; j<4; j++) {
+			ASSERT_EQ(mat.getValue()(i,j), expected(i,j));
+		}
+	}
+
+	// Test partial derivatives
+	Eigen::Array<float, 3, 3> expectedDx1;
+	expectedDx1 <<
+	 2, 12, 10,
+	12, 40, 28,
+	10, 28, 18;
+
+	Eigen::Array<float, 3, 3> expectedDx2;
+	expectedDx2 <<
+	22,  52,  30,
+	52, 120,  68,
+	30,  68,  38;
+
+	Eigen::Array<float, 3, 3> expectedDx3;
+	expectedDx3 <<
+	42,  92,  50,
+	92, 200, 108,
+	50, 108,  58;
+
+	Eigen::Array<float, 3, 3> dx1 = grad.getValue(x[0]);
+	Eigen::Array<float, 3, 3> dx2 = grad.getValue(x[1]);
+	Eigen::Array<float, 3, 3> dx3 = grad.getValue(x[2]);
+
+
+	for(unsigned i=0; i<3; i++) {
+		for(unsigned j=0; j<3; j++) {
+			ASSERT_EQ(dx1(i,j), expectedDx1(i,j));
+			ASSERT_EQ(dx2(i,j), expectedDx2(i,j));
+			ASSERT_EQ(dx3(i,j), expectedDx3(i,j));
+		}
+	}
+
+
+
+}
+
+
+
 int main(int argc, char **argv) {
 	std::cout << "*** CONVOLUTION TEST SUITE ***" << std::endl;
 

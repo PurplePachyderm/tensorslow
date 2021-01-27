@@ -330,7 +330,7 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 
-// Splitting
+	// Splitting
 
 template <typename T>
 ts::SplitNode<T>::SplitNode(
@@ -467,7 +467,7 @@ std::vector<ts::Tensor<T>> ts::split(
 
 
 
-// Vertical concatenation
+	// Vertical concatenation
 
 template <typename T>
 ts::VertCatNode<T>::VertCatNode(
@@ -575,7 +575,7 @@ ts::Tensor<T> ts::vertCat(const std::vector<ts::Tensor<T>> &x) {
 
 
 
-// Flattening
+	// Flattening
 
 template <typename T>
 ts::FlatteningNode<T>::FlatteningNode(
@@ -663,3 +663,142 @@ ts::Tensor<T> ts::flattening(const ts::Tensor<T> &x) {
 
 	return ts::Tensor<T>(res, x.wList, nodePtr);
 }
+
+
+
+	// Im2col
+
+template <typename T>
+ts::Im2ColNode<T>::Im2ColNode(
+	std::vector<long> shape,
+	std::vector<int> newDependencies,
+	std::vector<long> newKernelDim,
+	std::vector<long> newMatrixDim,
+	unsigned newNChannels
+) {
+	// New tensor shape (vector)
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	this->dependencies =  newDependencies;
+
+	// Original matrix size
+	kernelDim = newKernelDim;
+	matrixDim = newMatrixDim;
+	nChannels = newNChannels;
+}
+
+
+
+template <typename T>
+Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Im2ColNode<T>::incrementGradient(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+		unsigned &j
+) {
+
+	// Used in the  ts::Tensor::grad() method. Computes the increment of a derivative
+	// for a im2col operation.
+
+	// childDerivative has the shape of the final matrix.
+	// The increment will have the shape of one input matrix (this method will
+	// be called once for each channel)
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
+	mat.setZero(matrixDim[0], matrixDim[1]);
+
+	// This matrix will be converted back to "normal" shape
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> im2colMat = childDerivative.block(
+		j * kernelDim[0] * kernelDim[1], 0,
+		kernelDim[0] * kernelDim[1], childDerivative.cols()
+	);
+
+	for(unsigned i=0; i<im2colMat.rows(); i++) {
+		// Each column is a col-major flattened submatrix
+		for(unsigned j=0; j<im2colMat.cols(); j++) {
+			// Get top left coords of submatrix
+			int submatTopX = j / (matrixDim[0] - kernelDim[0] + 1);
+			int submatTopY = j % (matrixDim[0] - kernelDim[0] + 1);
+
+			// Get coords in submatrix
+			int submatX = i / kernelDim[1];
+			int submatY = i % kernelDim[1];
+
+			// Add derivative to coords in original matrix
+			mat(submatTopX + submatX, submatTopY + submatY) =
+			mat(submatTopX + submatX, submatTopY + submatY) + im2colMat(i, j);
+
+		}
+	}
+
+	return mat;
+}
+
+
+
+template <typename T>
+ts::Tensor<T> ts::im2col(
+	const std::vector<ts::Tensor<T>> &x,
+	std::vector<unsigned> kernelDim
+) {
+	// Turns a tensor vector into a single im2col matrix
+	// Using a kernels matrix, one entire conv layer could be computed in
+	// only one matrix product
+
+	std::vector<int> dependencies = {};
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
+	res.resize(
+		kernelDim[0] * kernelDim[1] * x.size(),
+		(x[0].value.rows() - kernelDim[0] + 1) * (x[0].value.cols() - kernelDim[1] + 1)
+	);
+
+	for(unsigned i=0; i<x.size(); i++) {
+		for(unsigned j=0; j<x[i].value.rows() - kernelDim[0] + 1; j++) {
+			for(unsigned k=0; k<x[i].value.cols() - kernelDim[1] + 1; k++) {
+
+				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
+				x[i].value.block(j, k, kernelDim[0], kernelDim[1]);
+
+				Eigen::Map<Eigen::Array<T, -1, 1>> map =
+				Eigen::Map<Eigen::Array<T, -1, 1>>(
+					tmp.data(), tmp.cols() * tmp.rows()
+				);
+
+				res.block(i * kernelDim[0] * kernelDim[1], j * (x[i].value.rows() - kernelDim[0] + 1)  + k, kernelDim[0] * kernelDim[1], 1)
+				= map;
+
+			}
+		}
+
+		dependencies.push_back(x[i].index);
+	}
+
+
+	// Return
+	std::shared_ptr<ts::Node<T>> nodePtr (
+		new ts::Im2ColNode<T>(
+			{res.rows(), res.cols()},
+			dependencies,
+			{kernelDim[0], kernelDim[1]},
+			{x[0].value.rows(), x[0].value.cols()},
+			x.size()
+		)
+	);
+
+	return ts::Tensor<T>(res, x[0].wList, nodePtr);
+}
+
+
+// TODO
+// ts::Tensor<T> ts::col2im(
+// 	const std::vector<ts::Tensor<T>> &x,
+// 	std::vector<unsigned> outputDim
+// ) {
+// 	// Turns an im2col matrix into a channels vector
+// 	// The output can be reused in another im2col, or be
+// 	// flattened before dense layers.
+//
+//
+//
+// 	return res;
+// }
