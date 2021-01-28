@@ -126,7 +126,6 @@ public:
 	ts::Tensor<T> (*finalActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 
-	std::vector<unsigned> expectedInput;
 
 	// Convolution section
 	std::vector<ts::Tensor<T>> convKernels = {};

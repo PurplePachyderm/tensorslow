@@ -484,7 +484,6 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	}
 
 	// Set up data fields
-	expectedInput = inputSize;
 	pooling = poolingLayers;
 	convLayers.erase(convLayers.begin());
 	kernelDims = convLayers;
@@ -521,14 +520,6 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	// NOTE It might be a good idea to add an entire function to make sure that
 	// all parameters are compatible (in terms of size), and that output is
 	// computable
-
-	// Make sure input is large enough for first convolution
-	if(
-		input.getValue().rows() != expectedInput[0] ||
-		input.getValue().cols() != expectedInput[1]
-	) {
-		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), &(this->wList));
-	}
 
 
 	// Convert input to 2D vector (for number of channels) for use with the
@@ -588,7 +579,12 @@ template <typename T>
 void ts::ConvolutionalNetwork<T>::save(std::string filePath) {
 	std::ofstream out(filePath);
 
-	// TODO Save pooling/kernels/output data
+	out << static_cast<std::underlying_type<ts::ChannelSplit>::type>(channelSplit) << std::endl;
+	out << nInputChannels << std::endl;
+
+	out << ts::serializeUnsignedVec2D(pooling);
+	out << ts::serializeUnsignedVec2D(kernelDims);
+	out << ts::serializeUnsignedVec2D(outputDims);
 
 	out << ts::serializeTensorsVector(convKernels);
 	out << ts::serializeTensorsVector(convBiases);
@@ -603,18 +599,31 @@ void ts::ConvolutionalNetwork<T>::save(std::string filePath) {
 
 template <typename T>
 void ts::ConvolutionalNetwork<T>::load(std::string filePath) {
-	// Delete current tensors and reset wList
+	// Delete current model, reset wList
 	convKernels = {};
 	convBiases = {};
 	weights = {};
 	fullBiases = {};
 	this->wList.reset();
 
+	pooling = {};
+	kernelDims = {};
+	outputDims = {};
 
-	// Load new tensors
+
+	// Load new model
+	std::string line;
 	std::ifstream in(filePath);
 
-	// TODO Load pooling/kernel/output data
+	std::getline(in, line);
+	channelSplit = static_cast<ts::ChannelSplit>(std::stoi(line));
+
+	std::getline(in, line);
+	nInputChannels = std::stoi(line);
+
+	pooling = ts::parseUnsignedVec2D(in);
+	kernelDims = ts::parseUnsignedVec2D(in);
+	outputDims = ts::parseUnsignedVec2D(in);
 
 	convKernels = ts::parseTensorsVector(in, &(this->wList));
 	convBiases = ts::parseTensorsVector(in, &(this->wList));
