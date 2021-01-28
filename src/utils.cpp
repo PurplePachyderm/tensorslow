@@ -71,3 +71,30 @@ std::vector<std::vector<unsigned>> ts::parseUnsignedVec2D(
 
 	return vec2d;
 }
+
+
+
+void ts::progressBar(unsigned current, unsigned max) {
+	float progress = (float) current / (float) max;
+
+	std::cout << "\r[";
+	int pos = BARWIDTH * progress;
+
+	for (int i = 0; i < BARWIDTH; ++i) {
+	    if (i < pos) {
+			std::cout << "=";
+		}
+	    else if (i == pos) {
+			std::cout << ">";
+		}
+	    else {
+			std::cout << " ";
+		}
+	}
+	std::cout << "] " << (int) (progress * 100) << "% ";
+
+	std::cout << "(" << current << "/" << max << " batches)";
+
+	std::cout.flush();
+
+}

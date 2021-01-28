@@ -9,6 +9,8 @@
 #include <iostream>
 #include <fstream>
 
+#define BARWIDTH 30
+
 namespace ts {
 	std::vector<std::string> split(std::string str, char delimeter);
 
@@ -19,4 +21,6 @@ namespace ts {
 	std::vector<std::vector<unsigned>> parseUnsignedVec2D(
 		std::ifstream &in
 	);
+
+	void progressBar(unsigned current, unsigned max);
 }
