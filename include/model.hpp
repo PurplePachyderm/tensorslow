@@ -90,7 +90,7 @@ private:
 public:
 	MultiLayerPerceptron(unsigned inputSize, std::vector<unsigned> layers);
 
-	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::sigmoid);
+	ts::Tensor<T> (*activationFunction)(const ts::Tensor<T>&) = &(ts::relu);
 	ts::Tensor<T> (*finalActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 	std::vector<ts::Tensor<T>> weights = {};
@@ -121,18 +121,21 @@ public:
 		std::vector<unsigned> denseLayers
 	);
 
-	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::relu);
+	ts::Tensor<T> (*convActivation)(const ts::Tensor<T>&) = &(ts::leakyRelu);
 	ts::Tensor<T> (*denseActivation)(const ts::Tensor<T>&) = &(ts::relu);
+	ts::Tensor<T> (*finalActivation)(const ts::Tensor<T>&) = &(ts::sigmoid);
 
 
 	std::vector<unsigned> expectedInput;
 
-	// 1st dim : layers / 2nd dim : output channels / 3rd dim : input channels
-	std::vector<std::vector<std::vector<ts::Tensor<T>>>> convKernels = {};
-
-	std::vector<std::vector<ts::Tensor<T>>> convBiases = {};
-
+	// Convolution section
+	std::vector<ts::Tensor<T>> convKernels = {};
+	std::vector<ts::Tensor<T>> convBiases = {};
 	std::vector<std::vector<unsigned>> pooling;
+	std::vector<std::vector<unsigned>> kernelDims;
+	std::vector<std::vector<unsigned>> outputDims;	// Outputs right after convs
+
+	// Dense section
 	std::vector<ts::Tensor<T>> weights = {};
 	std::vector<ts::Tensor<T>> fullBiases = {};
 

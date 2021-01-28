@@ -225,7 +225,7 @@ int main(void) {
 	unsigned nTests = 100;
 
 	// WARNING You must include the output layer (size 10)
-	std::vector<unsigned> layers = {256, 128, 10};
+	std::vector<unsigned> layers = {512, 128, 10};
 
 
 
