@@ -224,7 +224,7 @@ ts::Tensor<T> ts::MultiLayerPerceptron<T>::compute(ts::Tensor<T> input) {
 		}
 		// Final layer (we might want another activation function)
 		else {
-			input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
+			input = (*finalActivation)(matProd(weights[i], input) + biases[i]);
 		}
 	}
 

@@ -168,7 +168,7 @@ int main(void) {
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
-	unsigned nEpochs = 3;
+	unsigned nEpochs = 10;
 
 	unsigned nTests = 100;
 
@@ -225,7 +225,7 @@ int main(void) {
 		{{0,0}, {2, 2}},
 
 		// Dense layers (with output vector & not including first layer)
-		{256, N_CLASSES}
+		{256, 128, N_CLASSES}
 	);
 
 	model.toggleGlobalOptimize(true);

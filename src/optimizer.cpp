@@ -164,7 +164,7 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 
 		// Start running and training the model
 
-	std::vector<std::vector<std::vector< T >>> losses(this->epochs, (std::vector<std::vector<T>>) {});
+		std::vector<std::vector<std::vector< T >>> losses(this->epochs, (std::vector<std::vector<T>>) {});
 
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
@@ -321,7 +321,7 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 
 		// Start running and training the model
 
-	std::vector<std::vector<std::vector< T >>> losses(this->epochs, (std::vector<std::vector<T>>) {});
+		std::vector<std::vector<std::vector< T >>> losses(this->epochs, (std::vector<std::vector<T>>) {});
 
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {

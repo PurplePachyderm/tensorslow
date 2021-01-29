@@ -217,7 +217,7 @@ int main(void) {
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
-	unsigned nEpochs = 3;
+	unsigned nEpochs = 10;
 
 	// If you're using the SGD optimizer
 	// float learningRate = 0.085f;
@@ -287,8 +287,6 @@ int main(void) {
 
 	ts::MultiLayerPerceptron<float> model(EXPECTED_IMAGE_SIZE, layers);
 	model.toggleGlobalOptimize(true);
-	model.activationFunction = &(ts::sigmoid);
-	model.finalActivation = &(ts::sigmoid);
 
 
 
