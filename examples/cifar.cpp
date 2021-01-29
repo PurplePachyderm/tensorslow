@@ -221,11 +221,11 @@ int main(void) {
 		ts::ChannelSplit::SPLIT_HOR, 3,
 
 		// Convolution / pooling
-		{{3, 3, 32}, {3, 3, 32}, {3, 3, 32}, {3, 3, 32}, {3, 3, 64}},
-		{{0,0}, {2,2}, {0,0}, {0, 0}, {2, 2}},
+		{{3, 3, 32}, {5, 5, 32}},
+		{{0,0}, {2, 2}},
 
 		// Dense layers (with output vector & not including first layer)
-		{1024, 512, 256, 64, N_CLASSES}
+		{256, N_CLASSES}
 	);
 
 	model.toggleGlobalOptimize(true);
