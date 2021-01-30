@@ -31,11 +31,6 @@ namespace ts {
 		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
 		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
 	);
-	template <typename T>
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> im2conv(
-		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
-		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
-	);
 
 	template <typename T> class ConvolutionNode;
 	template <typename T>
