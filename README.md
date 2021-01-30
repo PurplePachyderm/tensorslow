@@ -53,6 +53,10 @@ the provided script (once again, from the root of this repository) :
 This will create an `examples/mnist` folder containing the uncompressed dataset
 for both training and testing phases.
 
+The same goes for the CIFAR example :
+
+`bash examples/get-cifar.sh`
+
 
 ## Requirements
 
