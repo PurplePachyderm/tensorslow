@@ -31,11 +31,6 @@ namespace ts {
 		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
 		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
 	);
-	template <typename T>
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> im2conv(
-		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
-		const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
-	);
 
 	template <typename T> class ConvolutionNode;
 	template <typename T>
@@ -60,6 +55,20 @@ namespace ts {
 	template <typename T> class FlatteningNode;
 	template <typename T>
 	ts::Tensor<T> flattening(const ts::Tensor<T> &x);
+
+	template <typename T> class Im2ColNode;
+	template <typename T>
+	ts::Tensor<T> im2col(
+		const std::vector<ts::Tensor<T>> &x,
+		std::vector<unsigned> kernelDim
+	);
+
+	template <typename T> class Col2ImNode;
+	template <typename T>
+	std::vector<ts::Tensor<T>> col2im(
+		const ts::Tensor<T> &x,
+		std::vector<unsigned> outputDim
+	);
 }
 
 
@@ -186,4 +195,68 @@ private:
 	std::vector<long> size = {};
 
 	friend ts::Tensor<T> ts::flattening<>(const ts::Tensor<T> &x);
+};
+
+
+
+	// ts::Im2ColNode
+
+template <typename T>
+class ts::Im2ColNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	// This node can have n parents !
+	Im2ColNode(
+		std::vector<long> shape,
+		std::vector<int> newDependencies,
+		std::vector<long> newKernelDim,
+		std::vector<long> newMatrixDim,
+		unsigned newNChannels
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+
+	std::vector<long> kernelDim = {};
+	std::vector<long> matrixDim = {};	// Size of one channel
+	unsigned nChannels;	// Input nChannels
+
+	friend ts::Tensor<T> ts::im2col<>(
+		const std::vector<ts::Tensor<T>> &x,
+		std::vector<unsigned> kernelDim
+	);
+};
+
+
+
+	// ts::Col2ImNode
+
+template <typename T>
+class ts::Col2ImNode : public ts::Node<T> {
+private:
+	using ts::Node<T>::Node;
+
+	// This node can have n parents !
+	Col2ImNode(
+		std::vector<long> shape,
+		int xDep,
+		unsigned newPosition,
+		long newNChannels
+	);
+
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
+			unsigned &j
+	);
+
+	unsigned position;
+	unsigned nChannels;
+
+	friend std::vector<ts::Tensor<T>> ts::col2im<>(
+		const ts::Tensor<T> &x,
+		std::vector<unsigned> outputDim
+	) ;
 };

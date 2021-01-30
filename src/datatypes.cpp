@@ -77,10 +77,6 @@ template Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &mat,
 	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &ker
 );
-template Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
-	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &mat,
-	const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> &ker
-);
 template class ts::ConvolutionNode<float>;
 template ts::Tensor<float> ts::convolution(
 	const ts::Tensor<float> &mat, const ts::Tensor<float> &ker
@@ -99,6 +95,16 @@ template ts::Tensor<float> ts::vertCat<float>(
 );
 template class ts::FlatteningNode<float>;
 template ts::Tensor<float> ts::flattening<float>(const ts::Tensor<float> &x);
+template class ts::Im2ColNode<float>;
+template ts::Tensor<float> ts::im2col<float>(
+	const std::vector<ts::Tensor<float>> &x,
+	std::vector<unsigned> kernelDim
+);
+template class ts::Col2ImNode<float>;
+template std::vector<ts::Tensor<float>> ts::col2im<float>(
+	const ts::Tensor<float> &x,
+	std::vector<unsigned> outputDim
+);
 
 
 
@@ -158,10 +164,6 @@ template Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &mat,
 	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &ker
 );
-template Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
-	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &mat,
-	const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> &ker
-);
 template class ts::ConvolutionNode<double>;
 template ts::Tensor<double> ts::convolution(
 	const ts::Tensor<double> &mat, const ts::Tensor<double> &ker
@@ -180,3 +182,13 @@ template ts::Tensor<double> ts::vertCat<double>(
 );
 template class ts::FlatteningNode<double>;
 template ts::Tensor<double> ts::flattening<double>(const ts::Tensor<double> &x);
+template class ts::Im2ColNode<double>;
+template ts::Tensor<double> ts::im2col<double>(
+	const std::vector<ts::Tensor<double>> &x,
+	std::vector<unsigned> kernelDim
+);
+template class ts::Col2ImNode<double>;
+template std::vector<ts::Tensor<double>> ts::col2im<double>(
+	const ts::Tensor<double> &x,
+	std::vector<unsigned> outputDim
+);

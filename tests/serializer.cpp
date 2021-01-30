@@ -124,7 +124,7 @@ TEST(Models, Polynom) {
 				EXPECT_NEAR(srcModel.coefficients[i].getValue()(j, k), dstModel.coefficients[i].getValue()(j, k), 0.000001);
 			}
 		}
-		
+
 	}
 
 }
@@ -172,6 +172,48 @@ TEST(Models, MultiLayerPerceptron) {
 			}
 		}
 
+	}
+
+}
+
+
+
+TEST(Models, ConvolutionalNetwork) {
+	// Try to save and load a ts::ConvolutionalNetwork
+
+	ts::ConvolutionalNetwork<float> srcModel(
+		{30, 10},
+		ts::ChannelSplit::SPLIT_HOR, 3,
+		{{3, 3, 2}},
+		{{2,2}},
+		{5, 6}
+	);
+	srcModel.save("tests/cnn.ts");
+
+	ts::ConvolutionalNetwork<float> dstModel(
+		{30, 10},
+		ts::ChannelSplit::SPLIT_HOR, 3,
+		{{3, 3, 2}},
+		{{2,2}},
+		{5, 6}
+	);
+	dstModel.load("tests/cnn.ts");
+
+
+	// Compare outputs
+
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> randomInput;
+	randomInput.setRandom(30, 10);
+
+	// We need to create 2 tensors because the models use different wLists
+	ts::Tensor<float> srcInput = ts::Tensor<float>(randomInput, &(srcModel.wList));
+	ts::Tensor<float> dstInput = ts::Tensor<float>(randomInput, &(dstModel.wList));
+
+	ts::Tensor<float> srcOutput = srcModel.compute(srcInput);
+	ts::Tensor<float> dstOutput = dstModel.compute(dstInput);
+
+	for(unsigned i=0; i<6; i++) {
+		EXPECT_NEAR(srcOutput.getValue()(i, 0), dstOutput.getValue()(i, 0), 0.0001);
 	}
 
 }

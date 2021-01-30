@@ -269,7 +269,11 @@ ts::Tensor<T> ts::rescale(const ts::Tensor<T> &x) {
 
 	T max = x.value.maxCoeff();
 
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = x.value / max;
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = x.value;
+	if(max != 0) {
+		res = res / max;
+	}
+
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx;
 	dx.setZero(x.value.rows(), x.value.cols());
 	dx = dx + max;

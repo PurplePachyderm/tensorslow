@@ -82,6 +82,7 @@ TEST(MultiLayerPerceptron, ForwardPass) {
 	// Same example as the autodiff test, pre computed with PyTorch
 	// Assert result only (not its derivative as it's not easy to manually differentiate)
 	ts::MultiLayerPerceptron<float> model(2, {3});
+	model.activationFunction = &(ts::sigmoid);
 
 
 	Eigen::Array<float, 2, 1> inputTensor_;
@@ -125,7 +126,7 @@ TEST(MultiLayerPerceptron, ForwardPass) {
 
 TEST(Convolution, FullCNN) {
 
-	// Test a full CNN mode l(without fully connected layers) on a pre computed
+	// Test a full CNN model (without fully connected layers) on a pre computed
 	// example
 
 	ts::ConvolutionalNetwork<float> model(
@@ -136,56 +137,47 @@ TEST(Convolution, FullCNN) {
 		ts::ChannelSplit::NOSPLIT, 1,
 
 		// Convolution / pooling (we'll manually add it later)
-		{},
-		{},
+		{{3, 3, 3}},
+		{{2, 2}},
 
 		// No dense layer
 		{}
 	);
 
 
-	Eigen::Array<float, 3, 3> ker1;
-	ker1 <<
-	0.0818,  0.0582,  0.1489,
-	-0.0473, -0.2351, -0.1572,
-	-0.0813,  0.0225, -0.2979;
+	// Re arrange
+	Eigen::Array<float, 3, 9> ker;
+	ker <<
+	0.0818, -0.0473, -0.0813,
+	0.0582, -0.2351, 0.0225,
+	0.1489, -0.1572, -0.2979,
 
-	Eigen::Array<float, 3, 3> ker2;
-	ker2 <<
-	-0.1656,  0.2441,  0.2471,
-	-0.3325, -0.0628, -0.066,
-	0.0392, -0.0139, -0.1781;
+	-0.1656, -0.3325, 0.0392,
+	0.2441, -0.0628, -0.0139,
+	0.2471, -0.066, -0.1781,
 
-	Eigen::Array<float, 3, 3> ker3;
-	ker3 <<
-	0.1205, -0.1671,  0.3304,
-	-0.0070, -0.1583,  0.2241,
-	0.2955, -0.0712, -0.2202;
+	0.1205, -0.0070, 0.2955,
+	-0.1671, -0.1583, -0.0712,
+	0.3304, 0.2241, -0.2202;
 
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> biases;
-	biases.setZero(8, 8);
+	biases.setZero(3, 64);
 
-	std::vector< std::vector< ts::Tensor<float> >> convKernels = {
-		{ts::Tensor<float>(ker1, &(model.wList))},
-		{ts::Tensor<float>(ker2, &(model.wList))},
-		{ts::Tensor<float>(ker3, &(model.wList))}
+	std::vector< ts::Tensor<float> > convKernels = {
+		ts::Tensor<float>(ker, &(model.wList))
 	};
 
 	std::vector<ts::Tensor<float>> convBiases = {
 		ts::Tensor<float>(biases, &(model.wList)),
-		ts::Tensor<float>(biases, &(model.wList)),
-		ts::Tensor<float>(biases, &(model.wList))
 	};
 
 
-	model.convKernels = {convKernels};
-	model.convBiases = {convBiases};
-	model.pooling = {{2, 2}};
+	model.convKernels = convKernels;
+	model.convBiases = convBiases;
 	model.convActivation = &(ts::sigmoid);
 	model.denseActivation = &(ts::sigmoid);
 
 	model.toggleGlobalOptimize(true);
-
 
 	Eigen::Array<float, 10, 10> x_;
 	x_ <<
@@ -215,7 +207,6 @@ TEST(Convolution, FullCNN) {
 	0.5575, 0.5701, 0.5671;
 
 	ts::Tensor<float> expectedOutput = ts::Tensor<float>(expectedOutput_, &(model.wList));
-	expectedOutput = rescale(expectedOutput);
 
 	for(unsigned i=0; i<48; i++) {
 		ASSERT_NEAR(output.getValue()(i, 0), expectedOutput.getValue()(i, 0), 0.001);
@@ -223,40 +214,28 @@ TEST(Convolution, FullCNN) {
 
 	// Get gradient
 	ts::Tensor<float> norm = ts::squaredNorm(output);
-
-
 	ts::Gradient<float> gradient = norm.grad();
-
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> dker1 = gradient.getValue(model.convKernels[0][0][0]);
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> dker2 = gradient.getValue(model.convKernels[0][1][0]);
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> dker3 = gradient.getValue(model.convKernels[0][2][0]);
-
+	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> dker = gradient.getValue(model.convKernels[0]);
 
 	// Make sure gradient is correct
+	Eigen::Array<float, 1, 27> expectedDker;
+	expectedDker <<
+	1.9103, 1.3021, 1.7233,
+	2.0699, 1.0967, 1.8750,
+	2.5369, 1.3025, 1.2483,
 
-	Eigen::Array<float, 3, 3> expectedDker1;
-	expectedDker1 <<
-	1.9103, 2.0699, 2.5369,
-	1.3021, 1.0967, 1.3025,
-	1.7233, 1.8750, 1.2483;
+	1.6342, 0.8726, 2.1986,
+	2.5579, 1.4272, 1.9388,
+	2.6091, 1.7386, 1.5762,
 
-	Eigen::Array<float, 3, 3> expectedDker2;
-	expectedDker2 <<
-	1.6342, 2.5579, 2.6091,
-	0.8726, 1.4272, 1.7386,
-	2.1986, 1.9388, 1.5762;
+	1.5965, 1.7308, 2.4573,
+	1.9599, 1.4796, 2.1940,
+	3.1977, 2.0512, 1.5432;
 
-	Eigen::Array<float, 3, 3> expectedDker3;
-	expectedDker3 <<
-	1.5965, 1.9599, 3.1977,
-	1.7308, 1.4796, 2.0512,
-	2.4573, 2.1940, 1.5432;
 
 	for(unsigned i=0; i<3; i++) {
-		for(unsigned j=0; j<3; j++) {
-			ASSERT_NEAR(dker1(i, j), expectedDker1(i, j), 0.001);
-			ASSERT_NEAR(dker2(i, j), expectedDker2(i, j), 0.001);
-			ASSERT_NEAR(dker3(i, j), expectedDker3(i, j), 0.001);
+		for(unsigned j=0; j<9; j++) {
+			ASSERT_NEAR(dker(i, j), expectedDker(0, 9 * i + j), 0.001);
 		}
 	}
 

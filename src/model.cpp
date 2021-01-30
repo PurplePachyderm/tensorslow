@@ -170,17 +170,20 @@ ts::MultiLayerPerceptron<T>::MultiLayerPerceptron(
 	layers.insert(layers.begin(), inputSize);
 
 	for(unsigned i=1; i<layers.size(); i++) {
+		// Initializing values according to He Initialization
+		T variance = sqrt(2.0 / layers[i-1]);
+
 		// Add layer i-1 -> layer i weights
 		weights.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-			.setRandom(layers[i], layers[i-1]),
+			.setRandom(layers[i], layers[i-1]) * variance,
 			&(this->wList))
 		);
 
 		// Add layer i biases
 		biases.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-			.setRandom(layers[i], 1),
+			.setRandom(layers[i], 1) * variance,
 			&(this->wList))
 		);
 	}
@@ -221,7 +224,7 @@ ts::Tensor<T> ts::MultiLayerPerceptron<T>::compute(ts::Tensor<T> input) {
 		}
 		// Final layer (we might want another activation function)
 		else {
-			input = (*activationFunction)(matProd(weights[i], input) + biases[i]);
+			input = (*finalActivation)(matProd(weights[i], input) + biases[i]);
 		}
 	}
 
@@ -276,8 +279,6 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	// fullLayers: sizes of fully connected layers
 
 
-	std::vector<std::vector<int>> convBiasesSizes = {};
-
 		// Validate dimensions of network
 
 	if(inputSize.size() != 2) {
@@ -316,7 +317,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	}
 
 	// Splitting cols
-	if(splitDirection == ChannelSplit::SPLIT_VERT) {
+	else if(splitDirection == ChannelSplit::SPLIT_VERT) {
 		if(
 			inputSize[1] % inputChannels != 0 ||
 			inputSize[1] < inputChannels
@@ -327,6 +328,11 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		}
 
 		intermediarySize = {(int) inputSize[0], (int) inputSize[1] / (int) inputChannels};
+	}
+
+	// No split
+	else {
+		intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
 	}
 
 
@@ -363,10 +369,6 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		intermediarySize[1] = intermediarySize[1] - convLayers[i][1] + 1;
 
 
-		// Save intermediary for convBiases
-		convBiasesSizes.push_back(intermediarySize);
-
-
 		if(intermediarySize[0] <= 0 || intermediarySize[1] <= 0) {
 			std::cout << "ERROR: Convolution layer " << i <<
 			" is impossible" << std::endl;
@@ -395,6 +397,21 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 
 	// Convolution layers
 
+	// Splitting rows
+	if(splitDirection == ChannelSplit::SPLIT_HOR) {
+		intermediarySize = {(int) inputSize[0] / (int) inputChannels, (int) inputSize[1]};
+	}
+
+	// Splitting cols
+	else if(splitDirection == ChannelSplit::SPLIT_VERT) {
+		intermediarySize = {(int) inputSize[0], (int) inputSize[1] / (int) inputChannels};
+	}
+
+	// No split
+	else {
+		intermediarySize = {(int) inputSize[0], (int) inputSize[1]};
+	}
+
 	channelSplit = splitDirection;
 	nInputChannels = inputChannels;
 
@@ -404,37 +421,39 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	convKernels = {};
 	convBiases = {};
 
-	// For each layer ...
 	for(unsigned i=1; i<convLayers.size(); i++) {
 
-		convKernels.push_back({});
-		convBiases.push_back({});
+		// Initializing values according to He Initialization
+		T variance = sqrt(2.0 / (convLayers[i][0] * convLayers[i][1] * convLayers[i-1][2]));
 
-		// For each output ...
-		for(unsigned j=0; j<convLayers[i][2]; j++) {
+		convKernels.push_back(ts::Tensor<T>(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
+			.setRandom(
+				convLayers[i][2],
+				convLayers[i][0] * convLayers[i][1] * convLayers[i-1][2]
+			) * variance,
+			&(this->wList))
+		);
 
-			convBiases[i-1].push_back(ts::Tensor<T>(
-				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-				.setZero(convBiasesSizes[i-1][0], convBiasesSizes[i-1][1]),
-				&(this->wList))
-			);
+		intermediarySize[0] = intermediarySize[0] - convLayers[i][0] + 1;
+		intermediarySize[1] = intermediarySize[1] - convLayers[i][1] + 1;
 
-			convKernels[i-1].push_back({});
+		outputDims.push_back(
+			{(unsigned) intermediarySize[0], (unsigned) intermediarySize[1]}
+		);
 
-			// For each input ...
-			for(unsigned k=0; k<convLayers[i-1][2]; k++) {
+		convBiases.push_back(ts::Tensor<T>(
+			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
+			.setZero(
+				convLayers[i][2],
+				intermediarySize[0] * intermediarySize[1]
+			),
+			&(this->wList))
+		);
 
-				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
-				tmp.setRandom(convLayers[i][0], convLayers[i][1]);
-				tmp = tmp / 5.0f;
-
-				// ... add a conv kernel
-				convKernels[i-1][j].push_back(ts::Tensor<T>(
-					tmp,
-					&(this->wList))
-				);
-
-			}
+		if(poolingLayers[i-1][0] != 0 && poolingLayers[i-1][1] != 0) {
+			intermediarySize[0] = intermediarySize[0] / poolingLayers[i-1][0];
+			intermediarySize[1] = intermediarySize[1] / poolingLayers[i-1][1];
 		}
 	}
 
@@ -446,41 +465,45 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 	);
 
 	for(unsigned i=1; i<denseLayers.size(); i++) {
+		// Initializing values according to He Initialization
+		T variance = sqrt(2.0 / denseLayers[i-1]);
+
 		// Add layer i-1 -> layer i weights
 		weights.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-			.setRandom(denseLayers[i], denseLayers[i-1]),
+			.setRandom(denseLayers[i], denseLayers[i-1]) * variance,
 			&(this->wList))
 		);
 
 		// Add layer i biases
 		fullBiases.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
-			.setZero(denseLayers[i], 1),
-			&(this->wList))
-		);
+			.setRandom(denseLayers[i], 1) * variance,
+			&(this->wList)
+		));
 	}
 
 	// Set up data fields
-	expectedInput = inputSize;
 	pooling = poolingLayers;
+	convLayers.erase(convLayers.begin());
+	kernelDims = convLayers;
 }
 
 
 
 template <typename T>
 void ts::ConvolutionalNetwork<T>::toggleGlobalOptimize(bool enable) {
+	if(convKernels.size() != convBiases.size()) {
+		return;
+	}
+
 	if(weights.size() != fullBiases.size()) {
 		return;
 	}
 
 	for(unsigned i=0; i<convKernels.size(); i++) {
-		for(unsigned j=0; j<convKernels[i].size(); j++) {
-			this->toggleOptimize(&(convBiases[i][j]), enable);
-			for(unsigned k=0; k<convKernels[i][j].size(); k++) {
-				this->toggleOptimize(&(convKernels[i][j][k]), enable);
-			}
-		}
+		this->toggleOptimize(&(convKernels[i]), enable);
+		this->toggleOptimize(&(convBiases[i]), enable);
 	}
 
 	for(unsigned i=0; i<weights.size(); i++) {
@@ -498,14 +521,6 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	// all parameters are compatible (in terms of size), and that output is
 	// computable
 
-	// Make sure input is large enough for first convolution
-	if(
-		input.getValue().rows() != expectedInput[0] ||
-		input.getValue().cols() != expectedInput[1]
-	) {
-		return ts::Tensor<T>(Eigen::Array<T, 0, 0>(), &(this->wList));
-	}
-
 
 	// Convert input to 2D vector (for number of channels) for use with the
 	// im2col method. This should be a faster way to compute convolutions.
@@ -522,34 +537,17 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	// 1) Convolution / pooling computation loop
 	for(unsigned i=0; i<convKernels.size(); i++) {
+		// Compute the im2col multichannel convolution
+		input = ts::im2col(inputVec, kernelDims[i]);
+		input = (*convActivation)(matProd(convKernels[i], input) + convBiases[i]);
+		inputVec = ts::col2im(input,  outputDims[i]);
 
-		// We will need to backup the values of the previous layer to compute
-		// the new one
-		std::vector<ts::Tensor<T>> tmp = inputVec;
-
-		inputVec = {};
-
-		// For each output channel ...
-		for(unsigned j=0; j<convKernels[i].size(); j++) {
-			inputVec.push_back( ts::convolution(tmp[0], convKernels[i][j][0]) );
-
-			// For each input channel ...
-			// (add other elements)
-			for(unsigned k=1; k<convKernels[i][j].size(); k++) {
-				// ... compute a convolution
-				inputVec[j] = inputVec[j] + ts::convolution(tmp[k], convKernels[i][j][k]);
-			}
-
-			inputVec[j] = inputVec[j] + convBiases[i][j];
-
-			// A pooling layer of size 0 means we want to skip it
-			if(pooling[i][0] != 0 || pooling[i][1] != 0) {
+		// A pooling layer of size 0 means we want to skip it
+		if(pooling[i][0] != 0 || pooling[i][1] != 0) {
+			for(unsigned j=0; j<inputVec.size(); j++) {
 				inputVec[j] = ts::maxPooling(inputVec[j], pooling[i]);
 			}
-
-			inputVec[j] = (*convActivation)(inputVec[j]);
 		}
-
 	}
 
 
@@ -561,10 +559,16 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 
 	// 3) Dense layers computation loop
 	for(unsigned i=0; i<weights.size(); i++) {
-		input = (*denseActivation)(matProd(weights[i], input) + fullBiases[i]);
+		if(i < weights.size() - 1) {
+			input = (*denseActivation)(matProd(weights[i], input) + fullBiases[i]);
+		}
+		// Final layer (we might want another activation function)
+		else {
+			input = (*finalActivation)(matProd(weights[i], input) + fullBiases[i]);
+		}
 	}
 
-	return rescale(input);
+	return input;
 }
 
 
@@ -573,16 +577,15 @@ template <typename T>
 void ts::ConvolutionalNetwork<T>::save(std::string filePath) {
 	std::ofstream out(filePath);
 
+	out << static_cast<std::underlying_type<ts::ChannelSplit>::type>(channelSplit) << std::endl;
+	out << nInputChannels << std::endl;
 
-	// TODO Recursive function to save tensor of dimension n as a vector of
-	// a tensor of dimension n-1
-	out << convKernels.size() << std::endl;
-	for(unsigned i=0; i<convKernels.size(); i++) {
-		out << convKernels[i].size() << std::endl;
-		for(unsigned j=0; j<convKernels[i].size(); j++) {
-			out << ts::serializeTensorsVector(convKernels[i][j]);
-		}
-	}
+	out << ts::serializeUnsignedVec2D(pooling);
+	out << ts::serializeUnsignedVec2D(kernelDims);
+	out << ts::serializeUnsignedVec2D(outputDims);
+
+	out << ts::serializeTensorsVector(convKernels);
+	out << ts::serializeTensorsVector(convBiases);
 
 	out << ts::serializeTensorsVector(weights);
 	out << ts::serializeTensorsVector(fullBiases);
@@ -594,41 +597,37 @@ void ts::ConvolutionalNetwork<T>::save(std::string filePath) {
 
 template <typename T>
 void ts::ConvolutionalNetwork<T>::load(std::string filePath) {
-	// Delete current tensors and reset wList
+	// Delete current model, reset wList
 	convKernels = {};
+	convBiases = {};
 	weights = {};
 	fullBiases = {};
 	this->wList.reset();
 
-	// Load new tensors
+	pooling = {};
+	kernelDims = {};
+	outputDims = {};
+
+
+	// Load new model
+	std::string line;
 	std::ifstream in(filePath);
 
-
-	// TODO Same recursive function for parsing ?
-
-	std::string line;
 	std::getline(in, line);
-	unsigned size = std::stoi(line);
-	unsigned subsize;
+	channelSplit = static_cast<ts::ChannelSplit>(std::stoi(line));
 
-	convKernels = {};
+	std::getline(in, line);
+	nInputChannels = std::stoi(line);
 
-	for(unsigned i=0; i<size; i++) {
-		std::getline(in, line);
-		subsize = std::stoi(line);
+	pooling = ts::parseUnsignedVec2D(in);
+	kernelDims = ts::parseUnsignedVec2D(in);
+	outputDims = ts::parseUnsignedVec2D(in);
 
-		convKernels.push_back({});
-
-		for(unsigned j=0; j<subsize; j++) {
-			convKernels[i].push_back(ts::parseTensorsVector(in, &(this->wList)));
-		}
-
-	}
-
+	convKernels = ts::parseTensorsVector(in, &(this->wList));
+	convBiases = ts::parseTensorsVector(in, &(this->wList));
 
 	weights = ts::parseTensorsVector(in, &(this->wList));
 	fullBiases = ts::parseTensorsVector(in, &(this->wList));
-
 
 	in.close();
 }

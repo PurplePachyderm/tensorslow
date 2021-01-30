@@ -169,6 +169,8 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
 
+		std::cout << "Epoch " << i + 1 << "/" <<  this->epochs << ": " << std::endl;
+
 		losses[i] = std::vector<std::vector<T>>(batches.size(), (std::vector<T>) {});
 
 		// Batches
@@ -202,9 +204,9 @@ std::vector<std::vector<std::vector< T >>> ts::GradientDescentOptimizer<T>::run(
 			updateModel(model, batches[j].size());
 			this->gradAccumulator.reset();
 
-			// TODO Progress bar ?
-			std::cout << "Epoch " << i << ", Batch " << j << std::endl;
+			ts::progressBar(j + 1, batches.size());
 		}
+		std::cout << std::endl << std::endl;
 	}
 
 
@@ -324,6 +326,8 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 	// Epochs
 	for(unsigned i=0; i<this->epochs; i++) {
 
+		std::cout << "Epoch " << i + 1 << "/" <<  this->epochs << ": " << std::endl;
+
 		losses[i] = std::vector<std::vector<T>>(batches.size(), (std::vector<T>) {});
 
 		// Batches
@@ -365,9 +369,9 @@ std::vector<std::vector<std::vector< T >>> ts::AdamOptimizer<T>::run(
 			decayedBeta1 = decayedBeta1 * beta1;
 			decayedBeta2 = decayedBeta2 * beta2;
 
-			// TODO Progress bar ?
-			std::cout << "Epoch " << i << ", Batch " << j << std::endl;
+			ts::progressBar(j + 1, batches.size());
 		}
+		std::cout << std::endl << std::endl;
 	}
 
 
