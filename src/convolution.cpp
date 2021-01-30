@@ -8,7 +8,7 @@
 
 
 	// Convolution operation on Eigen arrays
-	// (will be reused in ts::Tensor convolutions)
+	// (LEGACY, for benchmarking purpose only)
 
 template <typename T>
 Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
@@ -45,66 +45,8 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 
 
 
-template <typename T>
-Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::im2conv(
-	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &mat,
-	const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &ker
-) {
-
-	// Make sure ker is smaller than mat
-	if(mat.rows() < ker.rows() || mat.cols() < ker.cols()) {
-		return Eigen::Array<T, 0, 0>();
-	}
-
-
-		// 1) Use im2col method to convert mat
-
-	unsigned newRows = mat.rows() - ker.rows() + 1;
-	unsigned newCols = mat.cols() - ker.cols() + 1;
-
-	// Flatten and get new kernel height
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> vertKer = ker;
-	vertKer = Eigen::Map<Eigen::Array<T, -1, 1>>(
-		vertKer.data(), vertKer.cols() * vertKer.rows()
-	);
-	unsigned height = vertKer.rows();
-
-
-	// Generate res matrix for product
-	// RowMajor is needed for resize at the end
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> res;
-	res.setZero(
-		newRows * newCols,
-		height
-	);
-
-
-	#pragma omp parallel for collapse(2)
-	for(unsigned i=0; i<newCols; i++) {
-		for(unsigned j=0; j<newRows; j++) {
-			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp;
-
-			tmp = mat.block(j, i, ker.rows(), ker.cols());
-			tmp = Eigen::Map<Eigen::Array<T, 1, -1>>(
-				tmp.data(), tmp.cols()*tmp.rows()
-			);
-			res.block(j * newCols + i, 0, 1, height) = tmp;
-		}
-	}
-
-
-
-		// 2) Compute matrix product
-
-	res = res.matrix() * vertKer.matrix();
-	res.resize(newRows, newCols);
-
-	return res;
-}
-
-
-
 	// Convolution
+	// (LEGACY, for benchmarking purpose only)
 
 template <typename T>
 Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::ConvolutionNode<T>::incrementGradient(
@@ -787,6 +729,7 @@ ts::Tensor<T> ts::im2col(
 
 	return ts::Tensor<T>(res, x[0].wList, nodePtr);
 }
+
 
 
 	// Col2im

@@ -15,6 +15,9 @@
 #include "../include/tensorslow.h"
 
 
+// TODO Convert this benchmark to compare naive vs im2col approaches
+// for multichannel convolutions.
+
 static void convArrayPerf(benchmark::State& state) {
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> mat;
 	mat.setRandom(state.range(0), state.range(0));
@@ -28,22 +31,6 @@ static void convArrayPerf(benchmark::State& state) {
 }
 
 BENCHMARK(convArrayPerf)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4);
-
-
-static void im2convPerf(benchmark::State& state) {
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> mat;
-	mat.setRandom(state.range(0), state.range(0));
-
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ker;
-	ker.setRandom(KERNEL_SIZE, KERNEL_SIZE);
-
-	for(auto _ : state) {
-		ts::im2conv(mat, ker);
-	}
-}
-
-BENCHMARK(im2convPerf)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4);
-
 
 
 BENCHMARK_MAIN();

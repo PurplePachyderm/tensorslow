@@ -111,7 +111,6 @@ protected:
 
 	void resetGradAccumulator();	// Set values to 0
 	void setupGradAccumulator(ts::Model<T> &model);	// Generate 0-filled elements
-	void incrementGradAccumulator(ts::Gradient<T> &gradient);
 
 	// Dependent of optimizer type. Applies and the accumulated gradient.
 	virtual void updateModel(ts::Model<T> &model, unsigned batchSize) = 0;

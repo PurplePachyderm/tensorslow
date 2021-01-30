@@ -538,9 +538,7 @@ ts::Tensor<T> ts::ConvolutionalNetwork<T>::compute(ts::Tensor<T> input) {
 	// 1) Convolution / pooling computation loop
 	for(unsigned i=0; i<convKernels.size(); i++) {
 		// Compute the im2col multichannel convolution
-
 		input = ts::im2col(inputVec, kernelDims[i]);
-
 		input = (*convActivation)(matProd(convKernels[i], input) + convBiases[i]);
 		inputVec = ts::col2im(input,  outputDims[i]);
 
