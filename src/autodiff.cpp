@@ -165,13 +165,13 @@ int ts::WengertList<T>::size() {
 
 template <typename T>
 int ts::WengertList<T>::reset() {
-	// Used to remove all nodes but the input nodes, so the input tensors can
+	// Used to remove all nodes but the optimizable input nodes, so the input tensors can
 	// be reused in new computations. Returns the new size of the list.
 
 	// First pass : remove non optimizable variables
 	for(unsigned i = nodes.size(); i-- > 0; ) {
 
-		// If the node is not an input (has no dependencies)
+		// If the node is not an input (has dependencies)
 		if(nodes[i]->dependencies.size() != 0) {
 			nodes.erase(nodes.begin() + i);
 		}

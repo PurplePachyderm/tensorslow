@@ -199,6 +199,14 @@ int main(void) {
 		"examples/cifar/data_batch_6.bin", std::ios::binary
 	);
 
+	if(
+		!batch1.is_open()
+	) {
+		std::cout << "Error: CIFAR dataset not found" << std::endl;
+		std::cout << "Make sure you ran the examples/get-cifar.sh script" << std::endl;
+		return -1;
+	}
+
 
 		// You can change batches for training / prediction phases
 

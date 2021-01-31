@@ -76,7 +76,7 @@ ts::GradientAccumulator<T>::GradientAccumulator(ts::Model<T> &model) {
 
 template <typename T>
 void ts::GradientAccumulator<T>::reset() {
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(unsigned i=0; i<elements.size(); i++) {
 		elements[i].reset();
 	}
@@ -88,7 +88,7 @@ template <typename T>
 void ts::GradientAccumulator<T>::increment(ts::Gradient<T> &gradient) {
 	// Increment all elements of gradAccumulator according to gradient
 
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(unsigned i=0; i<elements.size(); i++) {
 		// We use two different indices systems here
 		// (one for the wList/grad and one for the gradient accumulator)
@@ -141,7 +141,7 @@ template <typename T>
 void ts::GradientDescentOptimizer<T>::updateModel(
 	ts::Model<T> &model, unsigned batchSize
 ) {
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(unsigned i=0; i<this->gradAccumulator.elements.size(); i++) {
 		this->gradAccumulator.updateTensor(
 			model, i,
@@ -240,7 +240,7 @@ template <typename T>
 void ts::AdamOptimizer<T>::updateModel(
 	ts::Model<T> &model, unsigned batchSize
 ) {
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(unsigned i=0; i<this->gradAccumulator.elements.size(); i++) {
 		this->gradAccumulator.updateTensor(
 			model, i,

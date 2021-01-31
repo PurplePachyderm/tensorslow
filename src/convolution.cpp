@@ -167,6 +167,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::PoolingNode<T>::incrementGra
 	// Affect coefficients of childDerivative to upsample pools by filling each
 	// pool with the corresponding value
 
+	#pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<childDerivative.cols(); i++) {
 		for(unsigned j=0; j<childDerivative.rows(); j++) {
 
@@ -228,6 +229,7 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 	// Compute both pooled matrix (res) and dx
+	#pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<res.cols(); i++) {
 		for(unsigned j=0; j<res.rows(); j++) {
 
@@ -558,7 +560,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::increment
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
 	mat.setZero(size[0], size[1]);
 
-	#pragma omp parallel for
+	#pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<size[1]; i++) {
 		for(unsigned j=0; j<size[0]; j++) {
 			mat(j, i) = childDerivative(j * size[1] + i, 0);
@@ -654,20 +656,21 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Im2ColNode<T>::incrementGrad
 		kernelDim[0] * kernelDim[1], childDerivative.cols()
 	);
 
-	for(unsigned i=0; i<im2colMat.rows(); i++) {
+	// #pragma omp parallel for collapse(2)
+	for(unsigned i=0; i<im2colMat.cols(); i++) {
 		// Each column is a col-major flattened submatrix
-		for(unsigned j=0; j<im2colMat.cols(); j++) {
+		for(unsigned j=0; j<im2colMat.rows(); j++) {
 			// Get top left coords of submatrix
-			int submatTopX = j / (matrixDim[0] - kernelDim[0] + 1);
-			int submatTopY = j % (matrixDim[0] - kernelDim[0] + 1);
+			int submatTopX = i / (matrixDim[0] - kernelDim[0] + 1);
+			int submatTopY = i % (matrixDim[0] - kernelDim[0] + 1);
 
 			// Get coords in submatrix
-			int submatX = i / kernelDim[1];
-			int submatY = i % kernelDim[1];
+			int submatX = j / kernelDim[1];
+			int submatY = j % kernelDim[1];
 
 			// Add derivative to coords in original matrix
 			mat(submatTopX + submatX, submatTopY + submatY) =
-			mat(submatTopX + submatX, submatTopY + submatY) + im2colMat(i, j);
+			mat(submatTopX + submatX, submatTopY + submatY) + im2colMat(j, i);
 
 		}
 	}
@@ -695,18 +698,19 @@ ts::Tensor<T> ts::im2col(
 	);
 
 	for(unsigned i=0; i<x.size(); i++) {
-		for(unsigned j=0; j<x[i].value.rows() - kernelDim[0] + 1; j++) {
-			for(unsigned k=0; k<x[i].value.cols() - kernelDim[1] + 1; k++) {
+		// #pragma omp parallel for collapse(2)
+		for(unsigned j=0; j<x[i].value.cols() - kernelDim[0] + 1; j++) {
+			for(unsigned k=0; k<x[i].value.rows() - kernelDim[1] + 1; k++) {
 
 				Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> tmp =
-				x[i].value.block(j, k, kernelDim[0], kernelDim[1]);
+				x[i].value.block(k, j, kernelDim[0], kernelDim[1]);
 
 				Eigen::Map<Eigen::Array<T, -1, 1>> map =
 				Eigen::Map<Eigen::Array<T, -1, 1>>(
 					tmp.data(), tmp.cols() * tmp.rows()
 				);
 
-				res.block(i * kernelDim[0] * kernelDim[1], j * (x[i].value.rows() - kernelDim[0] + 1)  + k, kernelDim[0] * kernelDim[1], 1)
+				res.block(i * kernelDim[0] * kernelDim[1], k * (x[i].value.rows() - kernelDim[0] + 1)  + j, kernelDim[0] * kernelDim[1], 1)
 				= map;
 
 			}
