@@ -168,7 +168,7 @@ int main(void) {
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
-	unsigned nEpochs = 10;
+	unsigned nEpochs = 7;
 
 	unsigned nTests = 100;
 
@@ -229,7 +229,7 @@ int main(void) {
 		ts::ChannelSplit::SPLIT_HOR, 3,
 
 		// Convolution / pooling
-		{{3, 3, 32}, {5, 5, 32}},
+		{{5, 5, 32}, {5, 5, 64}},
 		{{0,0}, {2, 2}},
 
 		// Dense layers (with output vector & not including first layer)

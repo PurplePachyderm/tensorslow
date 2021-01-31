@@ -31,7 +31,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
 	res.resize(newRows, newCols);
 
-	#pragma omp parallel for collapse(2)
+	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<newCols; i++) {
 		for(unsigned j=0; j<newRows; j++) {
 			// Compute one element of feature map
@@ -167,7 +167,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::PoolingNode<T>::incrementGra
 	// Affect coefficients of childDerivative to upsample pools by filling each
 	// pool with the corresponding value
 
-	#pragma omp parallel for collapse(2)
+	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<childDerivative.cols(); i++) {
 		for(unsigned j=0; j<childDerivative.rows(); j++) {
 
@@ -229,7 +229,7 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 	// Compute both pooled matrix (res) and dx
-	#pragma omp parallel for collapse(2)
+	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<res.cols(); i++) {
 		for(unsigned j=0; j<res.rows(); j++) {
 
@@ -560,7 +560,7 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::increment
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
 	mat.setZero(size[0], size[1]);
 
-	#pragma omp parallel for collapse(2)
+	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<size[1]; i++) {
 		for(unsigned j=0; j<size[0]; j++) {
 			mat(j, i) = childDerivative(j * size[1] + i, 0);
