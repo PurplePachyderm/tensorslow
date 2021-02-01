@@ -222,7 +222,7 @@ int main(void) {
 	// If you're using the SGD optimizer
 	// float learningRate = 0.085f;
 
-	unsigned nTests = 100;
+	unsigned nTests = 300;
 
 	// WARNING You must include the output layer (size 10)
 	std::vector<unsigned> layers = {512, 128, 10};
@@ -381,6 +381,25 @@ int main(void) {
 	std::cout << "Number of failures: " << nErrors << std::endl;
 
 	std::cout << "Accuracy: " << 100 * (float) nSuccesses / (float) nTests << "%" << std::endl;
+
+	// Generate datafile for gnuplot
+	// freopen("mnist.dat", "w", stdout);
+	//
+	// // Epoches
+	// for(unsigned i=0; i<losses.size(); i++) {
+
+	// 	// Batches
+	// 	for(unsigned j=0; j<losses[i].size(); j++) {
+	// 		float avg = 0;
+	//
+	// 		// Data instances
+	// 		for(unsigned k=0; k<losses[i][j].size(); k++) {
+	// 			avg += losses[i][j][k];
+	// 		}
+	//
+	// 		std::cout << avg /  (float) losses[i][j].size() << std::endl;
+	// 	}
+	// }
 
 	return 0;
 }

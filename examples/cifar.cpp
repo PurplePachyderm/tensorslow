@@ -170,7 +170,7 @@ int main(void) {
 	unsigned nBatches = 1000;
 	unsigned nEpochs = 7;
 
-	unsigned nTests = 100;
+	unsigned nTests = 300;
 
 
 		// Open data files
@@ -229,7 +229,7 @@ int main(void) {
 		ts::ChannelSplit::SPLIT_HOR, 3,
 
 		// Convolution / pooling
-		{{5, 5, 32}, {5, 5, 64}},
+		{{3, 3, 32}, {5, 5, 32}},
 		{{0,0}, {2, 2}},
 
 		// Dense layers (with output vector & not including first layer)
@@ -333,6 +333,26 @@ int main(void) {
 	batch4.close();
 	batch5.close();
 	batch6.close();
+
+
+	// Generate datafile for gnuplot
+	// freopen("cifar.dat", "w", stdout);
+	//
+	// // Epoches
+	// for(unsigned i=0; i<losses.size(); i++) {
+	//
+	// 	// Batches
+	// 	for(unsigned j=0; j<losses[i].size(); j++) {
+	// 		float avg = 0;
+	//
+	// 		// Data instances
+	// 		for(unsigned k=0; k<losses[i][j].size(); k++) {
+	// 			avg += losses[i][j][k];
+	// 		}
+	//
+	// 		std::cout << avg /  (float) losses[i][j].size() << std::endl;
+	// 	}
+	// }
 
 	return 0;
 }
