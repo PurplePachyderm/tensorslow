@@ -196,16 +196,16 @@ ts::Tensor<T> ts::relu(const ts::Tensor<T> &x) {
 	// Output is then rescaled between 0 and 1
 
 	// Apply cwise max function
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = x.value;
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx = x.value;
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
+	res.resize(x.value.rows(), x.value.cols());
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx;
+	dx.resize(x.value.rows(), x.value.cols());
 
 
-	#pragma omp parallel for
-	for(unsigned i=0; i<res.cols(); i++) {
-		for(unsigned j=0; j<res.rows(); j++) {
-			res(j, i) =  (res(j,i) < 0) ? 0 : res(j, i);
-			dx(j, i) =  (res(j,i) != 0) ? 1.0 : 0;
-		}
+	#pragma omp parallel for schedule(auto)
+	for(unsigned i=0; i<res.size(); i++) {
+		res(i) = (x.value(i) <= 0) ? 0 : x.value(i);
+		dx(i) = (x.value(i) <= 0) ? 0 : 1;
 	}
 
 
@@ -231,17 +231,16 @@ ts::Tensor<T> ts::leakyRelu(const ts::Tensor<T> &x) {
 	// Output is then rescaled between 0 and 1
 
 	// Apply cwise max function
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res = x.value;
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx = x.value;
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
+	res.resize(x.value.rows(), x.value.cols());
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> dx;
+	dx.resize(x.value.rows(), x.value.cols());
 
-	// Uses hardcoded 0.1 parameter for now
 
-	#pragma omp parallel for
-	for(unsigned i=0; i<res.cols(); i++) {
-		for(unsigned j=0; j<res.rows(); j++) {
-			res(j, i) =  (res(j,i) < 0) ? 0.1 * res(j, i) : res(j, i);
-			dx(j, i) =  (res(j,i) != 0) ? 1.0 : 0.1;
-		}
+	#pragma omp parallel for schedule(auto)
+	for(unsigned i=0; i<res.size(); i++) {
+			res(i) = (x.value(i) <= 0) ? 0.1 * x.value(i) : x.value(i);
+			dx(i) = (x.value(i) <= 0) ? 0.1 : 1;
 	}
 
 

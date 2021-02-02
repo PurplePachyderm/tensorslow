@@ -164,11 +164,11 @@ int main(void) {
 
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
-	omp_set_num_threads(4);
+	omp_set_num_threads(2);
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
-	unsigned nEpochs = 7;
+	unsigned nEpochs = 15;
 
 	unsigned nTests = 300;
 

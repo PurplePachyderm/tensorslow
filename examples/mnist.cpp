@@ -291,12 +291,12 @@ int main(void) {
 
 
 	// Adam optimizer is now the default one
-	ts::AdamOptimizer<float> optimizer;
+	// ts::AdamOptimizer<float> optimizer;
 
 	// You can use the SGD optimizer instead
 	// (it is recommended to adjust parameters. For instance, you can increase
 	// the number of batches)
-	// ts::GradientDescentOptimizer<float> optimizer(learningRate);
+	ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
 	optimizer.epochs = nEpochs;
 

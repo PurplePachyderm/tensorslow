@@ -30,6 +30,7 @@ static void sigmoidPerf(benchmark::State& state) {
 BENCHMARK(sigmoidPerf)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4);
 
 
+
 static void reluPerf(benchmark::State& state) {
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> vec_;
 	vec_.setRandom(state.range(0), 1);

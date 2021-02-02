@@ -11,8 +11,9 @@
 
 
 TEST(Convolution, Convolution) {
-	// Tests a convolution operation, as well as its differentiation (TODO)
+	// Tests a convolution operation
 	// In this example, we try to detect a diagonal line
+	// NOTE This is a test for legacy code, since im2col approach is now used
 
 	ts::WengertList<float> wList;
 

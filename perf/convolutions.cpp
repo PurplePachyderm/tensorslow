@@ -1,6 +1,12 @@
 /*
-* Benchmark comparing classic and im2col approaches of convolution operations
-* (only tests primitive operations on Eigen::Arrays)
+* Benchmark comparing classic and im2col approaches of multichannel
+* convolution operations. The tested convolution layer has 16 input channels for
+* 32 output channels and uses 3*3 convoluition kernels. The base matrices sizes
+* vary between 10 and 250.
+* NOTE This benchmark will be in the advantage of the im2col method which is
+* more efficient with high nuber of channels (as opposed to convolution with
+* very few channels). Its aim is to show the interest of the im2col method in
+* a realistic CNN.
 */
 
 #include <iostream>
@@ -9,14 +15,12 @@
 #define KERNEL_SIZE 3
 #define SIZE_1 10
 #define SIZE_2 50
-#define SIZE_3 250
-#define SIZE_4 500
+#define SIZE_3 100
+#define SIZE_4 250
+#define SIZE_5 500
 
 #include "../include/tensorslow.h"
 
-
-// TODO Convert this benchmark to compare naive vs im2col approaches
-// for multichannel convolutions.
 
 static void naiveConv(benchmark::State& state) {
 
@@ -29,7 +33,7 @@ static void naiveConv(benchmark::State& state) {
 	// Gen kernels
 	for(unsigned i=0; i<32; i++) {
 		kernels.push_back({});
-		for(unsigned j=0; j<3; j++) {
+		for(unsigned j=0; j<16; j++) {
 			Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> ker;
 			ker.setRandom(KERNEL_SIZE, KERNEL_SIZE);
 			kernels[i].push_back(
@@ -40,7 +44,7 @@ static void naiveConv(benchmark::State& state) {
 
 	// Gen input matrices
 	std::vector<ts::Tensor<float>> mat = {};
-	for(unsigned i=0; i<3; i++) {
+	for(unsigned i=0; i<16; i++) {
 		Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> mat_;
 		mat_.setRandom(state.range(0), state.range(0));
 
@@ -68,7 +72,7 @@ static void naiveConv(benchmark::State& state) {
 				)
 			);
 
-			for(unsigned j=0; j<3; j++) {
+			for(unsigned j=0; j<16; j++) {
 				res[i] = res[i] + ts::convolution(mat[j], kernels[i][j]);
 			}
 		}
@@ -76,7 +80,7 @@ static void naiveConv(benchmark::State& state) {
 	}
 }
 
-BENCHMARK(naiveConv)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4);
+BENCHMARK(naiveConv)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4)->Arg(SIZE_5);
 
 
 
@@ -85,12 +89,12 @@ static void im2col(benchmark::State& state) {
 	ts::WengertList<float> wList;
 
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> kernel_;
-	kernel_.setRandom(32, 27);
+	kernel_.setRandom(32, 144);
 	ts::Tensor<float> kernel = ts::Tensor<float>(kernel_, &wList);
 
 	// Gen input matrices
 	std::vector<ts::Tensor<float>> mat = {};
-	for(unsigned i=0; i<3; i++) {
+	for(unsigned i=0; i<16; i++) {
 		Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> mat_;
 		mat_.setRandom(state.range(0), state.range(0));
 
@@ -115,7 +119,7 @@ static void im2col(benchmark::State& state) {
 	}
 }
 
-BENCHMARK(im2col)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4);
+BENCHMARK(im2col)->Arg(SIZE_1)->Arg(SIZE_2)->Arg(SIZE_3)->Arg(SIZE_4)->Arg(SIZE_5);
 
 
 

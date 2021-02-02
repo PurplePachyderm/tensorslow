@@ -31,7 +31,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::convArray(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> res;
 	res.resize(newRows, newCols);
 
-	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<newCols; i++) {
 		for(unsigned j=0; j<newRows; j++) {
 			// Compute one element of feature map
@@ -167,7 +166,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::PoolingNode<T>::incrementGra
 	// Affect coefficients of childDerivative to upsample pools by filling each
 	// pool with the corresponding value
 
-	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<childDerivative.cols(); i++) {
 		for(unsigned j=0; j<childDerivative.rows(); j++) {
 
@@ -178,7 +176,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::PoolingNode<T>::incrementGra
 					childDerivative(j, i);
 				}
 			}
-
 		}
 	}
 
@@ -229,7 +226,7 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 	// Compute both pooled matrix (res) and dx
-	// #pragma omp parallel for collapse(2)
+	#pragma omp parallel for collapse(2) schedule(auto)
 	for(unsigned i=0; i<res.cols(); i++) {
 		for(unsigned j=0; j<res.rows(); j++) {
 
@@ -557,15 +554,11 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::increment
 	// childDerivative is a flattened vector. We need to convert it back to a
 	// matrix with the dimensions of the original matrix.
 
-	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> mat;
-	mat.setZero(size[0], size[1]);
-
-	// #pragma omp parallel for collapse(2)
-	for(unsigned i=0; i<size[1]; i++) {
-		for(unsigned j=0; j<size[0]; j++) {
-			mat(j, i) = childDerivative(j * size[1] + i, 0);
-		}
-	}
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> mat = childDerivative;
+	mat = Eigen::Map<Eigen::Array<T, -1, 1>>(
+		mat.data(), mat.cols() * mat.rows()
+	);
+	mat.resize(size[0], size[1]);
 
 	return mat;
 }
@@ -575,9 +568,8 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::FlatteningNode<T>::increment
 template <typename T>
 ts::Tensor<T> ts::flattening(const ts::Tensor<T> &x) {
 	// Flattening operation to convert matrix to vector
-	// A x matrix of size m*n becomes the following vector :
-	// x(1,1), ..., x(1, n), x(2,1), ..., x(m, n)
-	// (the resulting size is (m*n, 1)
+	// A x matrix of size m*n becomes a (m * n, 1) vector
+	// Conversion is column major by default (because of Eigen storing order)
 
 	// The gradient will have to be computed for a scalar
 	x.wList->elementWiseOnly = false;
@@ -656,7 +648,6 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::Im2ColNode<T>::incrementGrad
 		kernelDim[0] * kernelDim[1], childDerivative.cols()
 	);
 
-	// #pragma omp parallel for collapse(2)
 	for(unsigned i=0; i<im2colMat.cols(); i++) {
 		// Each column is a col-major flattened submatrix
 		for(unsigned j=0; j<im2colMat.rows(); j++) {
@@ -698,7 +689,7 @@ ts::Tensor<T> ts::im2col(
 	);
 
 	for(unsigned i=0; i<x.size(); i++) {
-		// #pragma omp parallel for collapse(2)
+		#pragma omp parallel for collapse(2) schedule(auto)
 		for(unsigned j=0; j<x[i].value.cols() - kernelDim[0] + 1; j++) {
 			for(unsigned k=0; k<x[i].value.rows() - kernelDim[1] + 1; k++) {
 
@@ -797,7 +788,7 @@ std::vector<ts::Tensor<T>> ts::col2im(
 		tmp.resize(outputDim[0], outputDim[1]);
 
 
-		// COnvert it back to matrix form
+		// Convert it back to matrix form
 		std::shared_ptr<ts::Node<T>> nodePtr (
 			new ts::Col2ImNode<T>(
 				{tmp.rows(), tmp.cols()},

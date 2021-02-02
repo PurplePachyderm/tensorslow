@@ -176,6 +176,7 @@ TEST(Convolution, FullCNN) {
 	model.convBiases = convBiases;
 	model.convActivation = &(ts::sigmoid);
 	model.denseActivation = &(ts::sigmoid);
+	model.denseActivation = &(ts::sigmoid);
 
 	model.toggleGlobalOptimize(true);
 
@@ -209,7 +210,7 @@ TEST(Convolution, FullCNN) {
 	ts::Tensor<float> expectedOutput = ts::Tensor<float>(expectedOutput_, &(model.wList));
 
 	for(unsigned i=0; i<48; i++) {
-		ASSERT_NEAR(output.getValue()(i, 0), expectedOutput.getValue()(i, 0), 0.001);
+		EXPECT_NEAR(output.getValue()(i, 0), expectedOutput.getValue()(i, 0), 0.001);
 	}
 
 	// Get gradient
