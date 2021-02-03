@@ -284,27 +284,22 @@ int main(void) {
 		// Create and optimize the MultiLayerPerceptron (training phase)
 
 	std::cout << "Creating model..." << std::endl;
-
 	ts::MultiLayerPerceptron<float> model(EXPECTED_IMAGE_SIZE, layers);
 	model.toggleGlobalOptimize(true);
 
-
-
 	// Adam optimizer is now the default one
-	// ts::AdamOptimizer<float> optimizer;
+	ts::AdamOptimizer<float> optimizer;
 
 	// You can use the SGD optimizer instead
 	// (it is recommended to adjust parameters. For instance, you can increase
 	// the number of batches)
-	ts::GradientDescentOptimizer<float> optimizer(learningRate);
+	// ts::GradientDescentOptimizer<float> optimizer(learningRate);
 
 	optimizer.epochs = nEpochs;
 
 	std::cout << "Training model..." << std::endl;
 	std::vector<std::vector<std::vector< float >>> losses =
 	optimizer.run(model, trainingData);
-
-
 	std::cout << "Training phase complete !" << std::endl << std::endl;
 
 
@@ -381,6 +376,9 @@ int main(void) {
 	std::cout << "Number of failures: " << nErrors << std::endl;
 
 	std::cout << "Accuracy: " << 100 * (float) nSuccesses / (float) nTests << "%" << std::endl;
+
+
+		// Save data
 
 	// Generate datafile for gnuplot
 	// freopen("mnist.dat", "w", stdout);

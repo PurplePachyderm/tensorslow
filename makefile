@@ -50,8 +50,10 @@ $(PERF_FILES): $(BIN)/%_perf: $(PERF)/%.cpp
 
 examples:  $(SO_PATH) $(EX_FILES)
 $(EX_FILES): $(BIN)/%_example: $(EX)/%.cpp
-	$(CC) $< $(CPPFLAGS) $(OPT_FLAGS) $(LINK_FLAGS) -o $@
+	$(CC) $< $(CPPFLAGS) $(OPT_FLAGS) $(LINK_FLAGS) -Dcimg_display=0 -o $@
 
+# NOTE The above -Dcimg_display=0 flag avoids compatibility issues between X.h
+# header (included in Cimg) and Eigen
 
 
 # Phonies
