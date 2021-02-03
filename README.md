@@ -44,18 +44,25 @@ Command | Effect | Target folder
 
 ## Examples
 
-Before running the MNIST example, you must download the
+- Before running the MNIST example, you must download the
 [MNIST dataset](http://yann.lecun.com/exdb/mnist/). You can do this by running
 the provided script (once again, from the root of this repository) :
 
-`bash examples/get-mnist.sh`
+	`bash examples/get-mnist.sh`
 
-This will create an `examples/mnist` folder containing the uncompressed dataset
-for both training and testing phases.
+	This will create an `examples/mnist` folder containing the uncompressed
+	dataset for both training and testing phases.
 
-The same goes for the CIFAR example :
+- The same goes for the [CIFAR](https://www.cs.toronto.edu/%7Ekriz/cifar.html)
+example :
 
-`bash examples/get-cifar.sh`
+	`bash examples/get-cifar.sh`
+
+- Finally, the R-CNN example uses CIFAR for training, and
+[Traffic-Net](https://github.com/OlafenwaMoses/Traffic-Net) for predictions.
+To download this dataset :
+
+	`bash examples/get-trafficnet.sh`
 
 
 ## Requirements
