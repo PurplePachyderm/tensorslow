@@ -67,10 +67,15 @@ To download this dataset :
 
 ## Requirements
 
+Some of these are not required by the core of the library, and are therefore
+optional :
+
 - [Eigen](http://eigen.tuxfamily.org) : your compiler should have access
   to the `Eigen` directory
-- [OpenMP](https://www.openmp.org/) : Used to take advantage of Eigen's
+- [OpenMP](https://www.openmp.org/) : used to take advantage of Eigen's
   multi-threading
 - [GoogleTest](https://github.com/google/googletest) : required to build the tests
 - [Benchmark](https://github.com/google/benchmark) : Google's benchmark library,
   required to build the benchmarks
+- [CImg](https://www.cimg.eu/) : to read and write JPEGs in the prediction
+  phase of the R-CNN example
