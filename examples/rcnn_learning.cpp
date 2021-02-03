@@ -1,6 +1,10 @@
 /*
-* Example usage of the library on the CIFAR dataset.
-* It is solved using a convolutional neural network.
+* This example trains a neural network recognizing cars/trucks (it will have
+* a scalar output) and that will be reused in a R-CNN.
+* This is only for the learning phase of the CNN, and the
+* RCNN/prediction phase will be in the examples/rcnn_prediction.cpp file.
+* There is still a prediction phase in this phase, but it's used to assert
+* the efficacy of the base CNN.
 *
 * NOTE: Run the examples/get-cifar.sh script before this example to download the
 * CIFAR dataset. Both the script and this example must be run from the root of
@@ -21,10 +25,13 @@
 #define IMAGE_HEIGHT 96
 #define N_CLASSES 10
 
+#define CARS_LABEL 1
+#define TRUCKS_LABEL 9
+
 
 
 // Function to generate a 2D vector of ts::TrainingData from CIFAR file
-// descriptor
+// descriptor. We will generate training data containing
 
 std::vector<std::vector< ts::TrainingData<float> >> readCifar(
 	std::ifstream &file, unsigned nBatches, unsigned batchSize
@@ -43,10 +50,10 @@ std::vector<std::vector< ts::TrainingData<float> >> readCifar(
 
 
 	// Arranging raw dataset by grouping images & labels in separate vectors
-	u_char * rawLabels = new u_char[nBatches * batchSize];
-	u_char ** rawImages = new u_char*[nBatches * batchSize];
+	u_char * rawLabels = new u_char[FILE_SIZE];
+	u_char ** rawImages = new u_char*[FILE_SIZE];
 
-	for(unsigned i=0; i<nBatches * batchSize; i++) {
+	for(unsigned i=0; i<FILE_SIZE; i++) {
 		// Read label
 		file.read((char*)&rawLabels[i], 1);
 
@@ -62,27 +69,59 @@ std::vector<std::vector< ts::TrainingData<float> >> readCifar(
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> label;
 	label.resize(10, 1);
 
+	unsigned currentPos = 0;
+
 	for(unsigned i=0; i<nBatches; i++) {
 		data.push_back({});
 		for(unsigned j=0; j<batchSize; j++) {
+
+			// Read the next image anyway
+			currentPos++;
+
+			if(
+				rawLabels[currentPos] != CARS_LABEL &&
+				rawLabels[currentPos] != TRUCKS_LABEL
+			) {
+				// If image is not a car or truck, we have a 1/4 chance
+				// of picking it for our training data (this will converge to a
+				// 50/50 proportions of vehicles in the end)
+
+
+				float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+				if(r > 0.25) {
+					// We won't pick that image, decrement i and skip
+					j--;
+					continue;
+				}
+			}
 
 			// Initialize Eigen Array for image
 			// This loop seems inefficient but it seems to be the only way ?
 			for(int k=0; k<IMAGE_HEIGHT; k++) {
 				for(int l=0; l<IMAGE_WIDTH; l++) {
+					// std::cout << "		(k, l) = " << k << "," << l << std::endl;
 					image(k, l) = (float)
-					rawImages[i * batchSize + j][k * IMAGE_WIDTH + l] / 255.0f;
+					rawImages[currentPos][k * IMAGE_WIDTH + l] / 255.0f;
 				}
 			}
 
+
 			// Initialize Eigen Array for label
-			label.setZero(10, 1);
-			label(rawLabels[i * batchSize + j], 0) = 1.0f;
+			label.setZero(1, 1);
+			if(
+				rawLabels[currentPos] == CARS_LABEL ||
+				rawLabels[currentPos] == TRUCKS_LABEL
+			) {
+				// Label is one for car / truck
+				label(0, 0) = 1.0f;
+			}
+
 
 			// Push a new ts::TrainingData
 			data[i].push_back(
 				ts::TrainingData<float>(image, label)
 			);
+
 		}
 	}
 
@@ -167,7 +206,7 @@ int main(void) {
 	omp_set_num_threads(2);
 
 	unsigned batchSize = 5;
-	unsigned nBatches = 1000;
+	unsigned nBatches = 750;
 	unsigned nEpochs = 15;
 
 	unsigned nTests = 300;
@@ -217,7 +256,7 @@ int main(void) {
 	readCifar(batch2, 1, nTests)[0];
 
 
-		// Create and optimize the MultiLayerPerceptron (training phase)
+		// Training phase
 
 	std::cout << "Creating model..." << std::endl;
 	ts::ConvolutionalNetwork<float> model(
@@ -228,14 +267,13 @@ int main(void) {
 		ts::ChannelSplit::SPLIT_HOR, 3,
 
 		// Convolution / pooling
-		{{3, 3, 32}, {5, 5, 32}},
+		{{3, 3, 32}, {5, 5, 16}},
 		{{0,0}, {2, 2}},
 
 		// Dense layers (with output vector & not including first layer)
-		{256, 128, N_CLASSES}
+		{128, 64, N_CLASSES, 1}
 	);
 	model.toggleGlobalOptimize(true);
-
 
 	ts::AdamOptimizer<float> optimizer;
 	optimizer.epochs = nEpochs;
@@ -275,35 +313,17 @@ int main(void) {
 
 		asciiCifar(testingData[i].input);
 
-		// Display label (expected output)
-		unsigned label = 0;
-		for(unsigned j=0; j<10; j++) {
-			if(testingData[i].expected(j, 0) == 1.0f) {
-				std::cout << "Label :" << classes[j] << std::endl;
-				label = j;
-			}
-		}
 
+		// Display result
+		std::cout << "Expected :" << testingData[i].expected(0, 0) << std::endl;
+		std::cout << "Prediction : " << result(0,0) << std::endl;
 
-		// Display prediction
-
-		// Get prediction (maximum of the result vector)
-		unsigned prediction = 0;
-		float maxProbability = result(0,0);
-		for(unsigned j=1; j<10; j++) {
-			if(result(j, 0) > maxProbability) {
-				prediction = j;
-				maxProbability = result(j, 0);
-			}
-		}
-
-		std::cout << "Prediction (" << classes[prediction] << "):" << std::endl;
-
-		for(unsigned j=0; j<10; j++) {
-			std::cout << classes[j] << ": " << result(j) << std::endl;
-		}
-
-		if(prediction == label) {
+		if(
+			// Predicted vehicle successfully
+			(result(0,0) > 0.5 && testingData[i].expected(0, 0) == 1) ||
+			// Predicted no vehicle successfully
+			(result(0,0) < 0.5 && testingData[i].expected(0, 0) == 0)
+		) {
 			std::cout << std::endl << "SUCCESS =)" << std::endl;
 			nSuccesses++;
 		}
@@ -322,6 +342,8 @@ int main(void) {
 	std::cout << "Accuracy: " << 100 * (float) nSuccesses / (float) nTests << "%" << std::endl;
 
 
+		// Clean and save data
+
 	batch1.close();
 	batch2.close();
 	batch3.close();
@@ -329,11 +351,12 @@ int main(void) {
 	batch5.close();
 	batch6.close();
 
-
-		// Save data
+	std::cout << std::endl << "Saving model, this might take a few minutes..." <<
+	std::endl;
+	model.save("examples/rcnn.ts");
 
 	// Generate datafile for gnuplot
-	// freopen("cifar.dat", "w", stdout);
+	// freopen("rcnn.dat", "w", stdout);
 	//
 	// // Epoches
 	// for(unsigned i=0; i<losses.size(); i++) {
