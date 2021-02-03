@@ -226,7 +226,7 @@ ts::Tensor<T> ts::maxPooling(const ts::Tensor<T> &x, std::vector<unsigned> pool)
 
 
 	// Compute both pooled matrix (res) and dx
-	#pragma omp parallel for collapse(2) schedule(auto)
+	// #pragma omp parallel for collapse(2) schedule(auto)
 	for(unsigned i=0; i<res.cols(); i++) {
 		for(unsigned j=0; j<res.rows(); j++) {
 
@@ -689,7 +689,7 @@ ts::Tensor<T> ts::im2col(
 	);
 
 	for(unsigned i=0; i<x.size(); i++) {
-		#pragma omp parallel for collapse(2) schedule(auto)
+		// #pragma omp parallel for collapse(2) schedule(auto)
 		for(unsigned j=0; j<x[i].value.cols() - kernelDim[0] + 1; j++) {
 			for(unsigned k=0; k<x[i].value.rows() - kernelDim[1] + 1; k++) {
 

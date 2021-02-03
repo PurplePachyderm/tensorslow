@@ -202,7 +202,7 @@ ts::Tensor<T> ts::relu(const ts::Tensor<T> &x) {
 	dx.resize(x.value.rows(), x.value.cols());
 
 
-	#pragma omp parallel for schedule(auto)
+	// #pragma omp parallel for schedule(auto)
 	for(unsigned i=0; i<res.size(); i++) {
 		res(i) = (x.value(i) <= 0) ? 0 : x.value(i);
 		dx(i) = (x.value(i) <= 0) ? 0 : 1;
@@ -237,7 +237,7 @@ ts::Tensor<T> ts::leakyRelu(const ts::Tensor<T> &x) {
 	dx.resize(x.value.rows(), x.value.cols());
 
 
-	#pragma omp parallel for schedule(auto)
+	// #pragma omp parallel for schedule(auto)
 	for(unsigned i=0; i<res.size(); i++) {
 			res(i) = (x.value(i) <= 0) ? 0.1 * x.value(i) : x.value(i);
 			dx(i) = (x.value(i) <= 0) ? 0.1 : 1;

@@ -4,10 +4,6 @@
 * threads than your number of physical cores.
 */
 
-// NOTE This benchmark was initially created to test the speedup provided
-// by Eigen's OpenMP parallelization. Because results were not convincing,
-// it is now disabled by default. To re-enable it, recompile the library after
-// removing the EIGEN_DONT_PARALLELIZE token from tensorslow.h
 
 #include <iostream>
 #include <benchmark/benchmark.h>
@@ -15,42 +11,31 @@
 
 #include "../include/tensorslow.h"
 
+
 // Change these values to modify model size
-#define INPUT_SIZE 2000
+#define INPUT_SIZE 1000
 #define LAYER_SIZE 1000
 
+#define NTHREADS_1 1
+#define NTHREADS_2 2
+#define NTHREADS_3 4
+#define NTHREADS_4 8
 
-
-// 1 THREAD
-
-static void mlp1Thread(benchmark::State& state) {
-
-	omp_set_num_threads(1);
-
-	ts::MultiLayerPerceptron<float> model(INPUT_SIZE, {LAYER_SIZE, LAYER_SIZE});
-	model.toggleGlobalOptimize(true);
-
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> input_;
-	input_.setRandom(INPUT_SIZE, 1);
-
-
-	for(auto _ : state) {
-		ts::Tensor<float> input = ts::Tensor<float>(input_, &(model.wList));
-		ts::squaredNorm(model.compute(input)).grad();
-		model.wList.reset();
-	}
-
-}
-
-BENCHMARK(mlp1Thread);
+#define NLAYERS_1 16
+#define NLAYERS_2 32
+#define NLAYERS_3 64
 
 
 
-// 2 THREADS
 
-static void mlp2Threads(benchmark::State& state) {
+// MLP
 
-	omp_set_num_threads(2);
+static void lightMLP(benchmark::State& state) {
+
+	// Multithreaded should be similar to single threaded, probably because
+	// of parallelism overhead (though it may differ by machine).
+
+	omp_set_num_threads(state.range(0));
 
 	ts::MultiLayerPerceptron<float> model(INPUT_SIZE, {LAYER_SIZE, LAYER_SIZE});
 	model.toggleGlobalOptimize(true);
@@ -67,21 +52,37 @@ static void mlp2Threads(benchmark::State& state) {
 
 }
 
-BENCHMARK(mlp2Threads);
+BENCHMARK(lightMLP)->Arg(NTHREADS_1)->Arg(NTHREADS_2)->Arg(NTHREADS_3)->Arg(NTHREADS_4);
 
 
 
-// 4 THREADS
+// CNN
 
-static void mlp4Threads(benchmark::State& state) {
+static void heavyCnn(benchmark::State& state) {
 
-	omp_set_num_threads(4);
+	// Since this model is way longe to compute, multi-threaded performances
+	// should start getting sligtly better.
 
-	ts::MultiLayerPerceptron<float> model(INPUT_SIZE, {LAYER_SIZE, LAYER_SIZE});
+	omp_set_num_threads(state.range(0));
+
+	ts::ConvolutionalNetwork<float> model(
+		// Input
+		{96, 32},
+
+		// Number of channels for input (3 for RGB)
+		ts::ChannelSplit::SPLIT_HOR, 3,
+
+		// Convolution / pooling
+		{{3, 3, 128}, {5, 5, 128}},
+		{{0,0}, {2, 2}},
+
+		// Dense layers (with output vector & not including first layer)
+		{256, 128, 10}
+	);
 	model.toggleGlobalOptimize(true);
 
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> input_;
-	input_.setRandom(INPUT_SIZE, 1);
+	input_.setRandom(96, 32);
 
 
 	for(auto _ : state) {
@@ -92,33 +93,7 @@ static void mlp4Threads(benchmark::State& state) {
 
 }
 
-BENCHMARK(mlp4Threads);
-
-
-
-// 8 THREADS
-
-static void mlp8Threads(benchmark::State& state) {
-
-	omp_set_num_threads(8);
-
-	ts::MultiLayerPerceptron<float> model(INPUT_SIZE, {LAYER_SIZE, LAYER_SIZE});
-	model.toggleGlobalOptimize(true);
-
-	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> input_;
-	input_.setRandom(INPUT_SIZE, 1);
-
-
-	for(auto _ : state) {
-		ts::Tensor<float> input = ts::Tensor<float>(input_, &(model.wList));
-		ts::squaredNorm(model.compute(input)).grad();
-		model.wList.reset();
-	}
-
-}
-
-BENCHMARK(mlp8Threads);
-
+BENCHMARK(heavyCnn)->Arg(NTHREADS_1)->Arg(NTHREADS_2)->Arg(NTHREADS_3)->Arg(NTHREADS_4);
 
 
 // MAIN

@@ -210,7 +210,6 @@ int main(void) {
 
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
-	omp_set_num_threads(4);
 
 		// Define size of dataset, network, ...
 		// (everything you might want to change should be here)

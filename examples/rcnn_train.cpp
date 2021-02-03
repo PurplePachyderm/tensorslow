@@ -203,7 +203,6 @@ int main(void) {
 
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
-	omp_set_num_threads(2);
 
 	unsigned batchSize = 5;
 	unsigned nBatches = 750;

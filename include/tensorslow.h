@@ -4,7 +4,6 @@
 
 #pragma once
 
-#define EIGEN_DONT_PARALLELIZE
 
 #include "utils.hpp"
 #include "autodiff.hpp"

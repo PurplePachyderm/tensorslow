@@ -16,12 +16,11 @@
 
 #include "../include/tensorslow.h"
 
-
 #define IMAGE_WIDTH 32
 // Images are stored in row-major order with each color component separated
 #define IMAGE_HEIGHT 96
 #define N_CLASSES 10
-#define DETECTION_THRESHOLD 0.995
+#define DETECTION_THRESHOLD 0.999
 #define STRIDE_X 5
 #define STRIDE_Y 5
 
@@ -258,16 +257,26 @@ int main(void) {
 		// Define images to load from dataset
 
 	std::vector<std::string> imgPath = {
-		"examples/trafficnet/train/sparse_traffic/images_315.jpg",
-		"examples/trafficnet/train/sparse_traffic/images_311.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_214.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_215.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_216.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_217.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_218.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_219.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_224.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_228.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_229.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_232.jpg",
 		"examples/trafficnet/train/sparse_traffic/images_262.jpg",
 		"examples/trafficnet/train/sparse_traffic/images_271.jpg",
 		"examples/trafficnet/train/sparse_traffic/images_282.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_311.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_315.jpg",
+		"examples/trafficnet/train/sparse_traffic/images_323.jpg",
 		"examples/trafficnet/train/sparse_traffic/images_330.jpg",
 		"examples/trafficnet/train/sparse_traffic/images_340.jpg",
 		"examples/trafficnet/train/sparse_traffic/images_350.jpg",
-		"examples/trafficnet/train/sparse_traffic/images_387.jpg",
-		"examples/trafficnet/train/sparse_traffic/images_323.jpg"
+		"examples/trafficnet/train/sparse_traffic/images_387.jpg"
 	};
 
 
