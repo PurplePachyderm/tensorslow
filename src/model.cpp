@@ -27,7 +27,7 @@ ts::Polynom<T>::Polynom(unsigned order, std::vector<long> size) {
 		coefficients.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
 			.setRandom(size[0], size[1]),
-			&(this->wList))
+			&(this->wList), true)
 		);
 	}
 
@@ -177,14 +177,14 @@ ts::MultiLayerPerceptron<T>::MultiLayerPerceptron(
 		weights.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
 			.setRandom(layers[i], layers[i-1]) * variance,
-			&(this->wList))
+			&(this->wList), true)
 		);
 
 		// Add layer i biases
 		biases.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
 			.setRandom(layers[i], 1) * variance,
-			&(this->wList))
+			&(this->wList), true)
 		);
 	}
 
@@ -432,7 +432,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 				convLayers[i][2],
 				convLayers[i][0] * convLayers[i][1] * convLayers[i-1][2]
 			) * variance,
-			&(this->wList))
+			&(this->wList), true)
 		);
 
 		intermediarySize[0] = intermediarySize[0] - convLayers[i][0] + 1;
@@ -448,7 +448,7 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 				convLayers[i][2],
 				intermediarySize[0] * intermediarySize[1]
 			),
-			&(this->wList))
+			&(this->wList), true)
 		);
 
 		if(poolingLayers[i-1][0] != 0 && poolingLayers[i-1][1] != 0) {
@@ -472,15 +472,15 @@ ts::ConvolutionalNetwork<T>::ConvolutionalNetwork(
 		weights.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
 			.setRandom(denseLayers[i], denseLayers[i-1]) * variance,
-			&(this->wList))
+			&(this->wList), true)
 		);
 
 		// Add layer i biases
 		fullBiases.push_back(ts::Tensor<T>(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>()
 			.setRandom(denseLayers[i], 1) * variance,
-			&(this->wList)
-		));
+			&(this->wList), true)
+		);
 	}
 
 	// Set up data fields

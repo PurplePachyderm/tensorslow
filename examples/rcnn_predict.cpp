@@ -250,7 +250,7 @@ int main(void) {
 		{128, 64, N_CLASSES, 1}
 	);
 	model.load("examples/rcnn.ts");
-	model.toggleGlobalOptimize(true);
+	// model.toggleGlobalOptimize(true);
 	std::cout << "Imported the CNN ..." << std::endl;
 
 

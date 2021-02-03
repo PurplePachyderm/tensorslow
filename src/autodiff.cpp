@@ -78,6 +78,16 @@ Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> ts::ElementWiseNode<T>::incremen
 
 
 template <typename T>
+ts::InputNode<T>::InputNode(std::vector<long> shape, bool model) {
+	this->rows = shape[0];
+	this->cols = shape[1];
+
+	isModel = model;
+};
+
+
+
+template <typename T>
 ts::MatProdNode<T>::MatProdNode(
 	std::vector<long> shape,
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> xVal, int xDep,
@@ -181,8 +191,9 @@ int ts::WengertList<T>::reset() {
 			std::shared_ptr<ts::InputNode<T>> inputPtr =
 			std::static_pointer_cast<ts::InputNode<T>>(nodes[i]);
 
-			// If the node is not optimizable (has a null optimizedTensor)
-			if(!(inputPtr->optimizedTensor)) {
+
+			// If the node is not part of model (probably model input)
+			if(!(inputPtr->isModel)) {
 				nodes.erase(nodes.begin() + i);
 			}
 		}
@@ -193,7 +204,9 @@ int ts::WengertList<T>::reset() {
 		std::shared_ptr<ts::InputNode<T>> inputPtr =
 		std::static_pointer_cast<ts::InputNode<T>>(nodes[i]);
 
-		inputPtr->optimizedTensor->index = i;
+		if(inputPtr->optimizedTensor != NULL) {
+			inputPtr->optimizedTensor->index = i;
+		}
 	}
 
 
@@ -220,7 +233,7 @@ void ts::WengertList<T>::toggleOptimize(ts::Tensor<T> * tensor, bool enable) {
 
 	// ts::Tensor
 
-// Input and not optimizable
+// Input and not part of model
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
@@ -235,7 +248,7 @@ ts::Tensor<T>::Tensor(
 
 		// Node without dependencies (input var,)
 		std::shared_ptr<ts::Node<T>> nodePtr (
-			new ts::InputNode<T>({newValue.rows(), newValue.cols()})
+			new ts::InputNode<T>({newValue.rows(), newValue.cols()}, false)
 		);
 
 		wList->nodes.push_back(nodePtr);
@@ -246,7 +259,34 @@ ts::Tensor<T>::Tensor(
 
 
 
-// Tensor with dependencies, not optimizable
+// Input and part of model
+template <typename T>
+ts::Tensor<T>::Tensor(
+	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
+	ts::WengertList<T> * newWList,
+	bool model
+) {
+	value = newValue;
+	wList = newWList;
+
+	if(wList != NULL) {
+		// Add new Tensor to the Wengert list
+		index = wList->nodes.size();
+
+		// Node without dependencies (input var,)
+		std::shared_ptr<ts::Node<T>> nodePtr (
+			new ts::InputNode<T>({newValue.rows(), newValue.cols()}, model)
+		);
+
+		wList->nodes.push_back(nodePtr);
+	} else {
+		index = -1;
+	}
+};
+
+
+
+// Tensor with dependencies
 template <typename T>
 ts::Tensor<T>::Tensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
@@ -267,7 +307,6 @@ ts::Tensor<T>::Tensor(
 
 
 // Helper function to create new instances without syntax template
-// (not optimizable)
 template <typename T>
 ts::Tensor<T> ts::NewTensor(
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,

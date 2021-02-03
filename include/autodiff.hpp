@@ -181,6 +181,7 @@ template <typename T>
 class ts::InputNode : public ts::Node<T> {
 private:
 	using ts::Node<T>::Node;
+	InputNode(std::vector<long> shape, bool model);
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> incrementGradient(
 			Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> &childDerivative,
@@ -189,6 +190,9 @@ private:
 
 	// We will need this to optimize the tensor value in a ts::Model
 	ts::Tensor<T> * optimizedTensor = NULL;
+
+	// If true, node won't be removed on wList reset
+	bool isModel = false;
 
 public:
 
@@ -321,11 +325,17 @@ public:
 
 	Tensor() {};
 
-	// Non optimizable input tensor (calling previous constructor with
-	// optimizable = false)
+	// Input tensor, part of model
 	Tensor(
 		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
 		ts::WengertList<T> * newWList
+	);
+
+	// Non part of model input tensor
+	// (equivalent to calling previous constructor with model = false)
+	Tensor(
+		Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> newValue,
+		ts::WengertList<T> * newWList, bool model
 	);
 
 	Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> getValue();

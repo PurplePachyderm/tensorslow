@@ -38,7 +38,6 @@ static void lightMLP(benchmark::State& state) {
 	omp_set_num_threads(state.range(0));
 
 	ts::MultiLayerPerceptron<float> model(INPUT_SIZE, {LAYER_SIZE, LAYER_SIZE});
-	model.toggleGlobalOptimize(true);
 
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> input_;
 	input_.setRandom(INPUT_SIZE, 1);
@@ -79,7 +78,6 @@ static void heavyCnn(benchmark::State& state) {
 		// Dense layers (with output vector & not including first layer)
 		{256, 128, 10}
 	);
-	model.toggleGlobalOptimize(true);
 
 	Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> input_;
 	input_.setRandom(96, 32);
