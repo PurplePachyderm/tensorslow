@@ -3,7 +3,7 @@
 ![License: Unlicense](https://img.shields.io/badge/license-Unlicense-green)
 ![Run all tests](https://github.com/PurplePachyderm/tensorslow/workflows/Run%20all%20tests/badge.svg)
 
-**[WIP]** Machine learning library implementing neural networks from scratch for a school project.
+Machine learning library implementing neural networks from scratch for a school project.
 
 
 ## How to build ?
@@ -63,6 +63,12 @@ example :
 To download this dataset :
 
 	`bash examples/get-trafficnet.sh`
+
+
+## Architecture
+
+To get an overview of the high level of the library's architecture, and
+a basic understanding of it, read the `ARCHITECTURE.md` file.
 
 
 ## Requirements
