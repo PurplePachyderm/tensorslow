@@ -160,7 +160,7 @@ void asciiCifar(Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> img) {
 
 
 
-int main(void) {
+int main(int argc, char *argv[]) {
 
 	std::cout << std::setprecision(3);
 	srand(time(NULL));
@@ -168,6 +168,23 @@ int main(void) {
 	unsigned batchSize = 5;
 	unsigned nBatches = 1000;
 	unsigned nEpochs = 15;
+
+	// (Optional) Read arguments to replace epochs, batches, and batches size values
+	if(argc == 4) {
+		unsigned argNEpochs = std::strtoul(argv[1], NULL, 0);
+		unsigned argNBatches = std::strtoul(argv[2], NULL, 0);
+		unsigned argBatchSize = std::strtoul(argv[3], NULL, 0);
+
+		if(
+			argBatchSize != 0 &&
+			argNBatches != 0 &&
+			argNEpochs != 0
+		) {
+			batchSize = argBatchSize;
+			nBatches = argNBatches;
+			nEpochs = argNEpochs;
+		}
+	}
 
 	unsigned nTests = 300;
 
