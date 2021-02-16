@@ -64,10 +64,14 @@ To download this dataset :
 
 	`bash examples/get-trafficnet.sh`
 
+You can use the following arguments on all examples running a training phase :
+
+`./bin/your_example [N EPOCHS] [N BATCHES] [BATCH SIZE]`
+
 
 ## Architecture
 
-To get an overview of the high level of the library's architecture, and
+To get an overview of the library's high level architecture, and
 a basic understanding of it, read the `ARCHITECTURE.md` file.
 
 
