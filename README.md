@@ -75,6 +75,12 @@ To get an overview of the library's high level architecture, and
 a basic understanding of it, read the `ARCHITECTURE.md` file.
 
 
+## Documentation
+
+The `doc` folder now contains the academic report and presentation of the
+project (in French).
+
+
 ## Requirements
 
 Some of these are not required by the core of the library, and are therefore
